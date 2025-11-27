@@ -1,0 +1,84 @@
+com.example.hotelpayment
+ ┣ controller
+ ┃ ┣ PaymentController.java
+ ┃ ┗ ReportController.java
+ ┣ dto
+ ┃ ┗ payment
+ ┃     ┣ PaymentRequest.java
+ ┃     ┣ PaymentResponse.java
+ ┃     ┣ InvoiceRequest.java
+ ┃     ┗ InvoiceResponse.java
+ ┣ model
+ ┃ ┗ operation
+ ┃     ┣ Payment.java
+ ┃     ┗ Invoice.java
+ ┣ repository
+ ┃ ┣ PaymentRepository.java
+ ┃ ┗ InvoiceRepository.java
+ ┣ service
+ ┃ ┣ base
+ ┃ ┃ ┣ PaymentService.java
+ ┃ ┃ ┣ InvoiceService.java
+ ┃ ┃ ┗ ReportService.java
+ ┃ ┗ impl
+ ┃     ┣ PaymentServiceImpl.java
+ ┃     ┣ InvoiceServiceImpl.java
+ ┃     ┗ ReportServiceImpl.java
+ ┗ HotelpaymentApplication.java  (main class auto-generated)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sandunilakshika008_db_user
+5AMrPDPPb69zL3Pg
+
+mongodb+srv://sandunilakshika008_db_user:5AMrPDPPb69zL3Pg@paymentcluster.fmj60br.mongodb.net/
+
+
+
+
+admin
+Payment@12345
+
+mongodb+srv://admin:Payment%4012345@paymentcluster.fmj60br.mongodb.net/?appName=PaymentCluster
+
+mongodb+srv://admin:Payment%4012345@paymentcluster.fmj60br.mongodb.net/hotelpaymentdb?retryWrites=true&w=majority
+
+mvn clean
+mvn install
+mvn spring-boot:run
+netstat -ano | findstr :9001
+taskkill /PID 17188 /F
+
+
+spring.data.mongodb.uri=mongodb+srv://admin:Payment%4012345@paymentcluster.fmj60br.mongodb.net/hotelpaymentdbretryWrites=true&w=majority
+
+spring.data.mongodb.database=hotelpaymentdb
+
+
+
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+
