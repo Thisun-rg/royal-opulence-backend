@@ -1,9 +1,8 @@
 package com.example.hotelpayment.Model.Operation;
 
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import lombok.Data;
 
 @Data
 @Document(collection = "invoices")
@@ -15,7 +14,8 @@ public class Invoice {
     private String reservationId;
     private String paymentId;
     private Double totalAmount;
+    private String currency;
 
-    private String invoiceNumber; // new
-    private String createdAt;     // new
+    private String invoiceNumber;
+    private Long issuedAt;   // timestamp (ms)
 }

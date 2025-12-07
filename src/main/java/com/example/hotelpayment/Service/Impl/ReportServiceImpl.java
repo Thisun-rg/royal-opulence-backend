@@ -1,5 +1,6 @@
 package com.example.hotelpayment.Service.Impl;
 
+import com.example.hotelpayment.DTO.Report.PaymentSummaryResponse;
 import com.example.hotelpayment.Model.Operation.Payment;
 import com.example.hotelpayment.Repository.PaymentRepository;
 import com.example.hotelpayment.Service.Base.ReportService;
@@ -13,15 +14,15 @@ public class ReportServiceImpl implements ReportService {
     private final PaymentRepository paymentRepository;
 
     @Override
-    public Double getTotalRevenue() {
-        return paymentRepository.findAll().stream()
-                .filter(p -> "SUCCESS".equals(p.getStatus()))
+    public PaymentSummaryResponse getPaymentSummary() {
+        double totalRevenue = paymentRepository.findAll().stream()
+                .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
                 .mapToDouble(Payment::getAmount)
                 .sum();
-    }
 
-    @Override
-    public Long getTotalPaymentCount() {
-        return paymentRepository.count();
+        long totalCount = paymentRepository.count();
+
+        return new PaymentSummaryResponse(totalRevenue, totalCount);
     }
 }
+

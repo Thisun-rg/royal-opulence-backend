@@ -14,8 +14,12 @@ public class Payment {
     private String reservationId;
     private Double amount;
     private String currency;      // e.g. LKR, USD
+
     private String status;        // PENDING, SUCCESS, FAILED
-    private String method;        // STRIPE, PAYHERE (later)
+    private String method;        // NOT_SET, STRIPE, PAYHERE (later)
+
+    private String description;   // optional
     private Long createdAt;       // timestamp (ms)
 }
+
 

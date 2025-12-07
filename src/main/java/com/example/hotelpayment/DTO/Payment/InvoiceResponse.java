@@ -10,7 +10,8 @@ public class InvoiceResponse {
     private String reservationId;
     private String paymentId;
     private Double totalAmount;
+    private String currency;
     private String invoiceNumber;
-    private String createdAt;
+    private Long issuedAt;    // timestamp (ms)
 }
 

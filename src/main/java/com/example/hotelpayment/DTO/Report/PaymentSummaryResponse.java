@@ -6,8 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PaymentSummaryResponse {
-
     private Double totalRevenue;
     private Long totalPayments;
-
 }
+

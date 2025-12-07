@@ -1,4 +1,5 @@
 package com.example.hotelpayment.DTO.Payment;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -9,6 +10,9 @@ public class PaymentResponse {
     private String reservationId;
     private Double amount;
     private String currency;
-    private String status;
+    private String status;        // PENDING, SUCCESS, FAILED
+    private String method;        // NOT_SET, STRIPE, PAYHERE (later)
+    private Long createdAt;       // timestamp (ms)
 }
+
 
