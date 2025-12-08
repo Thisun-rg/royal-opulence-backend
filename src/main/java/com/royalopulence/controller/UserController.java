@@ -33,12 +33,21 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    // Update profile info
+    // Get specific user by Mongo id (String)
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUser(@PathVariable String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(user);
+    }
+
+    // Update profile info (accepts user object in body)
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
+    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User updatedUser) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setName(updatedUser.getName());
+        // update other fields as needed (avoid changing email/password here unless intentional)
         userRepository.save(user);
         return ResponseEntity.ok(user);
     }
@@ -46,8 +55,9 @@ public class UserController {
     // Delete a user (Admin only)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }
+
