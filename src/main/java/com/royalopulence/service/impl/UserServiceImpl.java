@@ -23,49 +23,42 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
 
     @Override
-    public AuthResponse register(RegisterRequest request) {
-        System.out.println("📥 Register request for: " + request.getEmail());
-
-        // ✅ Make sure the user doesn’t already exist
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            System.out.println("⚠️ Email already registered: " + request.getEmail());
-            throw new RuntimeException("Email already exists!");
-        }
-
-        // ✅ Ensure a 'GUEST' role exists
-        Role defaultRole = roleRepository.findByName("GUEST")
-                .orElseGet(() -> {
-                    System.out.println("🆕 Creating new role: GUEST");
-                    return roleRepository.save(new Role(null, "GUEST"));
-                });
-
-        // ✅ Create the new user
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRoles(Collections.singleton(defaultRole));
-
-        // ✅ Save to DB
-        User savedUser = userRepository.save(user);
-        System.out.println("✅ User saved successfully: ID = " + savedUser.getId());
-
-        // ✅ Generate JWT token
-        String token = jwtUtil.generateToken(savedUser.getEmail());
-        return new AuthResponse(token, savedUser.getEmail(), "GUEST");
+public AuthResponse register(RegisterRequest request) {
+    if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        throw new RuntimeException("Email already exists!");
     }
+
+    // ensure role exists in roles collection
+    Role defaultRole = roleRepository.findByName("GUEST")
+            .orElseGet(() -> roleRepository.save(new Role(null, "GUEST")));
+
+    User user = new User();
+    user.setName(request.getName());
+    user.setEmail(request.getEmail());
+    user.setPassword(passwordEncoder.encode(request.getPassword()));
+    // store only the role name to simplify reads
+    user.setRoles(Collections.singleton(defaultRole.getName()));
+
+    User saved = userRepository.save(user);
+    String token = jwtUtil.generateToken(saved.getEmail());
+    return new AuthResponse(token, saved.getEmail(), "GUEST");
+}
+
 
     @Override
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+       User user = userRepository.findByEmail(request.getEmail())
+        .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String token = jwtUtil.generateToken(user.getEmail());
-        String role = user.getRoles().iterator().next().getName();
+    String token = jwtUtil.generateToken(user.getEmail());
+    String role = user.getRoles().stream().findFirst().orElse("GUEST");
 
-        return new AuthResponse(token, user.getEmail(), role);
+    return new AuthResponse(token, user.getEmail(), role);
+
     }
 }
+
+//pretier
