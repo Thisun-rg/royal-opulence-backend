@@ -15,7 +15,8 @@ public class UserProfile {
     @Id
     private String id;
 
-    private String userId;          // Reference to User._id
+    // reference to main user (User._id)
+    private String userId;
 
     // Basic info
     private String firstName;
@@ -26,20 +27,20 @@ public class UserProfile {
     private String address;
 
     // Profile preferences
-    private String avatarUrl;       // Profile image
-    private String preferredLanguage;
-    private String preferredCurrency;
+    private String avatarUrl;            // stored in S3 or local storage
+    private String preferredLanguage;    // EN, SI, TA...
+    private String preferredCurrency;    // LKR, USD, EUR...
     private boolean marketingOptIn;
 
     // Loyalty & membership
-    private String loyaltyLevel;    // Basic, Silver, Gold, Platinum
+    private String loyaltyLevel;         // Basic, Silver, Gold, Platinum
     private int loyaltyPoints;
 
-    // Emergency details
+    // Emergency contact
     private String emergencyContactName;
     private String emergencyContactPhone;
 
-    // Additional fields
+    // Additional identity fields
     private String nationality;
     private String passportNumber;
 }
