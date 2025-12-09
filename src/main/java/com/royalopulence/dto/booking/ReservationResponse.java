@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
-public class ReservationResponse {
+public class ReservationResponse { 
 private Long id;
 private Long roomId;
 private String roomNumber;
