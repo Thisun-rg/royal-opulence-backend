@@ -7,7 +7,5 @@ import java.util.List;     //for recognize List
 import com.royalopulence.dto.room.RoomResponse;
 
 public interface RoomService {
-
-    List<RoomResponse> searchAvailableRooms(LocalDate checkIn, LocalDate checkOut, int guests);
-
+List<RoomResponse> searchAvailableRooms(LocalDate checkIn, LocalDate checkOut, Integer guests);
 }
