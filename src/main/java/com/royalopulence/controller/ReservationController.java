@@ -1,9 +1,9 @@
 
 package com.royalopulence.controller;
 
-import com.royalopulence.dto.ReservationRequest;
-import com.royalopulence.dto.ReservationResponse;
-import com.royalopulence.service.ReservationService;
+import com.royalopulence.dto.booking.ReservationRequest;
+import com.royalopulence.dto.booking.ReservationResponse;
+import com.royalopulence.service.base.ReservationService;
 
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -53,9 +53,9 @@ public class ReservationController {
     public ResponseEntity<List<ReservationResponse>> list(
             @RequestParam(required = false) Long roomId,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) 
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) 
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         return ResponseEntity.ok(reservationService.listReservations(roomId, status, from, to));
