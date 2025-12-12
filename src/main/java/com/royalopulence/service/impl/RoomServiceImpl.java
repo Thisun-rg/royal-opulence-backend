@@ -1,8 +1,5 @@
 package com.royalopulence.service.impl;
 
-package com.royalopulence.service.impl;
-
-
 import com.royalopulence.dto.room.RoomResponse;
 import com.royalopulence.model.operation.Room;
 import com.royalopulence.repository.RoomRepository;
