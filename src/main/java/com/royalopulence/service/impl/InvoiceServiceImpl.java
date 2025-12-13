@@ -9,12 +9,10 @@ import com.royalopulence.repository.InvoiceRepository;
 import com.royalopulence.repository.PaymentRepository;
 import com.royalopulence.service.base.InvoiceService;
 import com.royalopulence.util.PdfUtil;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,69 +22,74 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final PaymentRepository paymentRepository;
     private final PdfUtil pdfUtil;
 
-
     @Override
     public InvoiceResponse createInvoice(InvoiceRequest request) {
 
-        // ensure referenced payment exists
         Payment payment = paymentRepository.findById(request.getPaymentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + request.getPaymentId()));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Payment not found with id: " + request.getPaymentId())
+                );
 
         Invoice invoice = new Invoice();
         invoice.setReservationId(request.getReservationId());
         invoice.setPaymentId(request.getPaymentId());
         invoice.setTotalAmount(request.getTotalAmount());
-        invoice.setCurrency(request.getCurrency() != null ? request.getCurrency() : payment.getCurrency());
-
+        invoice.setCurrency(
+                request.getCurrency() != null ? request.getCurrency() : payment.getCurrency()
+        );
         invoice.setInvoiceNumber("INV-" + System.currentTimeMillis());
         invoice.setIssuedAt(System.currentTimeMillis());
 
         invoice = invoiceRepository.save(invoice);
-
         return mapToResponse(invoice);
     }
 
     @Override
     public InvoiceResponse getInvoiceById(String id) {
         Invoice invoice = invoiceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found with id: " + id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Invoice not found with id: " + id)
+                );
         return mapToResponse(invoice);
     }
 
     @Override
     public List<InvoiceResponse> getAllInvoices() {
-        return invoiceRepository.findAll().stream()
+        return invoiceRepository.findAll()
+                .stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public InvoiceResponse getInvoiceByPaymentId(String paymentId) {
-    Invoice invoice = invoiceRepository.findByPaymentId(paymentId)
-            .orElseThrow(() ->
-                    new ResourceNotFoundException("Invoice not found for paymentId: " + paymentId)
-            );
-    return mapToResponse(invoice);
+        Invoice invoice = invoiceRepository.findByPaymentId(paymentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Invoice not found for paymentId: " + paymentId)
+                );
+        return mapToResponse(invoice);
     }
 
     @Override
     public List<InvoiceResponse> getInvoicesByReservationId(String reservationId) {
-    return invoiceRepository.findByReservationId(reservationId)
-            .stream()
-            .map(this::mapToResponse)
-            .toList();
+        return invoiceRepository.findByReservationId(reservationId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override
     public byte[] downloadInvoicePdf(String invoiceId) {
-    Invoice invoice = invoiceRepository.findById(invoiceId)
-            .orElseThrow(() ->
-                    new ResourceNotFoundException("Invoice not found with id: " + invoiceId)
-            );
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Invoice not found with id: " + invoiceId)
+                );
 
-    return pdfUtil.generateInvoicePdf(invoice);
+        return pdfUtil.generateInvoicePdf(invoice);
     }
-
 
     private InvoiceResponse mapToResponse(Invoice invoice) {
         return new InvoiceResponse(
@@ -100,4 +103,5 @@ public class InvoiceServiceImpl implements InvoiceService {
         );
     }
 }
+
 
