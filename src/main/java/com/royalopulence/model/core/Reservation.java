@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "reservations")
 public class Reservation {
@@ -22,6 +23,9 @@ public class Reservation {
 
     @Column(nullable = false)
     private LocalDate checkIn;
+
+    @Column(nullable = false)
+     private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private LocalDate checkOut;
@@ -42,8 +46,7 @@ public class Reservation {
     @Column(length = 500)
     private String specialRequests;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+   
 
     // ✅ Automatically set when record is created
     @PrePersist
@@ -123,6 +126,11 @@ public class Reservation {
     }
 
     public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    return createdAt;
+}
+
+public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+}
+
 }
