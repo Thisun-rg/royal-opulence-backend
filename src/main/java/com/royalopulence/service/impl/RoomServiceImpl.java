@@ -1,7 +1,7 @@
 package com.royalopulence.service.impl;
 
 import com.royalopulence.dto.room.RoomResponse;
-import com.royalopulence.model.operation.Room;
+import com.royalopulence.model.core.Room;
 import com.royalopulence.repository.RoomRepository;
 import com.royalopulence.service.base.RoomService;
 import org.springframework.stereotype.Service;
