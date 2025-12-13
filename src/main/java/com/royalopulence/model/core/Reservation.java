@@ -1,86 +1,128 @@
+
 package com.royalopulence.model.core;
 
+import com.royalopulence.model.operation.ReservationStatus;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.royalopulence.model.operation.ReservationStatus;
-
 @Entity
 @Table(name = "reservations")
-
 public class Reservation {
+
     @Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-private Long id;
-@ManyToOne(fetch = FetchType.LAZY)
-@JoinColumn(name = "room_id", nullable = false)
-private Room room;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    // Many reservations → one room
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
-private Long userId; // resolve to actual user via auth module
+    @Column(nullable = false)
+    private LocalDate checkIn;
 
+    @Column(nullable = false)
+    private LocalDate checkOut;
 
-private LocalDate checkIn;
-private LocalDate checkOut;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ReservationStatus status;
 
+    @Column(nullable = false)
+    private int guests;
 
-private int guests;
+    @Column
+    private Long userId;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal totalPrice;
 
-@Enumerated(EnumType.STRING)
-private ReservationStatus status;
+    @Column(length = 500)
+    private String specialRequests;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 
-private LocalDateTime createdAt;
+    // ✅ Automatically set when record is created
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.status = ReservationStatus.PENDING;
+    }
 
+    // ---------------- GETTERS & SETTERS ----------------
 
-private BigDecimal totalPrice;
-private String specialRequests;
+    public Long getId() {
+        return id;
+    }
 
+    public Room getRoom() {
+        return room;
+    }
 
-public Reservation() {}
+    public void setRoom(Room room) {
+        this.room = room;
+    }
 
+    public LocalDate getCheckIn() {
+        return checkIn;
+    }
 
-// getters and setters
-public Long getId() { return id; }
-public void setId(Long id) { this.id = id; }
+    public void setCheckIn(LocalDate checkIn) {
+        this.checkIn = checkIn;
+    }
 
+    public LocalDate getCheckOut() {
+        return checkOut;
+    }
 
-public Room getRoom() { return room; }
-public void setRoom(Room room) { this.room = room; }
+    public void setCheckOut(LocalDate checkOut) {
+        this.checkOut = checkOut;
+    }
 
+    public ReservationStatus getStatus() {
+        return status;
+    }
 
-public Long getUserId() { return userId; }
-public void setUserId(Long userId) { this.userId = userId; }
+    public void setStatus(ReservationStatus status) {
+        this.status = status;
+    }
 
+    public int getGuests() {
+        return guests;
+    }
 
-public LocalDate getCheckIn() { return checkIn; }
-public void setCheckIn(LocalDate checkIn) { this.checkIn = checkIn; }
+    public void setGuests(int guests) {
+        this.guests = guests;
+    }
 
+    public Long getUserId() {
+        return userId;
+    }
 
-public LocalDate getCheckOut() { return checkOut; }
-public void setCheckOut(LocalDate checkOut) { this.checkOut = checkOut; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
 
-public int getGuests() { return guests; }
-public void setGuests(int guests) { this.guests = guests; }
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
 
+    public String getSpecialRequests() {
+        return specialRequests;
+    }
 
-public ReservationStatus getStatus() { return status; }
-public void setStatus(ReservationStatus status) { this.status = status; }
+    public void setSpecialRequests(String specialRequests) {
+        this.specialRequests = specialRequests;
+    }
 
-
-public LocalDateTime getCreatedAt() { return createdAt; }
-public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-
-public BigDecimal getTotalPrice() { return totalPrice; }
-public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
-
-
-public String getSpecialRequests() { return specialRequests; }
-public void setSpecialRequests(String specialRequests) { this.specialRequests = specialRequests; }
-
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }
