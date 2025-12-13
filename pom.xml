@@ -30,10 +30,7 @@
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
+		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
@@ -98,13 +95,7 @@
 			<version>0.11.5</version>
 			<scope>runtime</scope>
 		</dependency>
-		<!-- MySQL Connector -->
-		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
+		
 
 	</dependencies>
 
