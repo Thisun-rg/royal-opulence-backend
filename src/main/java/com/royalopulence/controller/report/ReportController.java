@@ -19,5 +19,14 @@ public class ReportController {
         PaymentSummaryResponse summary = reportService.getPaymentSummary();
         return ResponseEntity.ok(new ApiResponse<>(true, "Payments summary", summary));
     }
+
+    @GetMapping("/payments-summary/pdf")
+    public ResponseEntity<byte[]> downloadPaymentSummaryPdf() {
+    return ResponseEntity.ok()
+            .header("Content-Type", "application/pdf")
+            .header("Content-Disposition", "attachment; filename=payment-summary.pdf")
+            .body(reportService.downloadPaymentSummaryPdf());
+    }
+
 }
 
