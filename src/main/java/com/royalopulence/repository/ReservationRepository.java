@@ -1,6 +1,6 @@
 package com.royalopulence.repository;
 
-import com.royalopulence.model.operation.Reservation;
+import com.royalopulence.model.core.Reservation;
 import com.royalopulence.model.operation.ReservationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
