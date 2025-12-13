@@ -4,6 +4,7 @@ import com.royalopulence.dto.report.PaymentSummaryResponse;
 import com.royalopulence.model.operation.Payment;
 import com.royalopulence.repository.PaymentRepository;
 import com.royalopulence.service.base.ReportService;
+import com.royalopulence.util.PdfUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 public class ReportServiceImpl implements ReportService {
 
     private final PaymentRepository paymentRepository;
+    private final PdfUtil pdfUtil;
 
     @Override
     public PaymentSummaryResponse getPaymentSummary() {
@@ -23,5 +25,11 @@ public class ReportServiceImpl implements ReportService {
         long totalCount = paymentRepository.count();
 
         return new PaymentSummaryResponse(totalRevenue, totalCount);
+    }
+
+    @Override
+    public byte[] downloadPaymentSummaryPdf() {
+        PaymentSummaryResponse summary = getPaymentSummary();
+        return pdfUtil.generatePaymentSummaryPdf(summary);
     }
 }
