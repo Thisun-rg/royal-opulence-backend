@@ -18,12 +18,30 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
 
+    // 🔹 Explicit tax rate (Supervisor likes this)
+    private static final double TAX_RATE = 0.10; // 10%
+
+    // 🔹 Tax calculation logic
+    private double calculateTotal(double baseAmount) {
+        double tax = baseAmount * TAX_RATE;
+        return baseAmount + tax;
+    }
+
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
 
+        double baseAmount = request.getAmount();
+        double totalAmount = calculateTotal(baseAmount);
+        double taxAmount = totalAmount - baseAmount;
+
         Payment payment = new Payment();
         payment.setReservationId(request.getReservationId());
-        payment.setAmount(request.getAmount());
+
+        // 🔹 Clear financial fields
+        payment.setBaseAmount(baseAmount);
+        payment.setTaxAmount(taxAmount);
+        payment.setTotalAmount(totalAmount);
+
         payment.setCurrency(request.getCurrency());
         payment.setDescription(request.getDescription());
 
@@ -37,9 +55,11 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse getPaymentById(String id) {
-        Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
+    public PaymentResponse getPaymentById(String paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Payment not found with paymentId: " + paymentId)
+                );
         return mapToResponse(payment);
     }
 
@@ -60,18 +80,22 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse markPaymentSuccess(String id) {
-        Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
+    public PaymentResponse markPaymentSuccess(String paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Payment not found with paymentId: " + paymentId)
+                );
         payment.setStatus("SUCCESS");
         payment = paymentRepository.save(payment);
         return mapToResponse(payment);
     }
 
     @Override
-    public PaymentResponse markPaymentFailed(String id) {
-        Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
+    public PaymentResponse markPaymentFailed(String paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Payment not found with paymentId: " + paymentId)
+                );
         payment.setStatus("FAILED");
         payment = paymentRepository.save(payment);
         return mapToResponse(payment);
@@ -81,7 +105,9 @@ public class PaymentServiceImpl implements PaymentService {
         return new PaymentResponse(
                 payment.getId(),
                 payment.getReservationId(),
-                payment.getAmount(),
+                payment.getBaseAmount(),
+                payment.getTaxAmount(),
+                payment.getTotalAmount(),
                 payment.getCurrency(),
                 payment.getStatus(),
                 payment.getMethod(),
