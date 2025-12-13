@@ -6,10 +6,19 @@ import com.royalopulence.dto.payment.InvoiceResponse;
 import java.util.List;
 
 public interface InvoiceService {
+
     InvoiceResponse createInvoice(InvoiceRequest request);
 
     InvoiceResponse getInvoiceById(String id);
 
     List<InvoiceResponse> getAllInvoices();
+
+    
+    InvoiceResponse getInvoiceByPaymentId(String paymentId);
+
+    List<InvoiceResponse> getInvoicesByReservationId(String reservationId);
+
+    byte[] downloadInvoicePdf(String invoiceId);
 }
+
 
