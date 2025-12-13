@@ -1,85 +1,81 @@
 package com.royalopulence.util;
 
-import com.royalopulence.model.payment.Invoice;
 import com.royalopulence.dto.report.PaymentSummaryResponse;
-import org.apache.pdfbox.pdmodel.*;
+import com.royalopulence.model.operation.Invoice;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 @Component
 public class PdfUtil {
 
     public byte[] generateInvoicePdf(Invoice invoice) {
-        try (PDDocument document = new PDDocument();
-             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+        try (PDDocument document = new PDDocument()) {
 
             PDPage page = new PDPage();
             document.addPage(page);
 
             PDPageContentStream content = new PDPageContentStream(document, page);
-            content.setFont(PDType1Font.HELVETICA_BOLD, 16);
-            content.beginText();
-            content.newLineAtOffset(50, 750);
-            content.showText("Royal Opulence Hotel - Invoice");
-            content.endText();
 
-            content.setFont(PDType1Font.HELVETICA, 12);
             content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 14);
+            content.setLeading(20f);
             content.newLineAtOffset(50, 700);
-            content.showText("Invoice ID: " + invoice.getInvoiceId());
-            content.newLineAtOffset(0, -20);
-            content.showText("Payment ID: " + invoice.getPayment().getPaymentId());
-            content.newLineAtOffset(0, -20);
+
+            content.showText("Invoice");
+            content.newLine();
+            content.showText("Invoice Number: " + invoice.getInvoiceNumber());
+            content.newLine();
+            content.showText("Payment ID: " + invoice.getPaymentId());
+            content.newLine();
             content.showText("Reservation ID: " + invoice.getReservationId());
-            content.newLineAtOffset(0, -20);
-            content.showText("Amount: " + invoice.getAmount());
-            content.newLineAtOffset(0, -20);
-            content.showText("Currency: " + invoice.getCurrency());
-            content.newLineAtOffset(0, -20);
-            content.showText("Issued Date: " + invoice.getIssuedDate());
+            content.newLine();
+            content.showText("Amount: " + invoice.getTotalAmount() + " " + invoice.getCurrency());
+
             content.endText();
-
             content.close();
-            document.save(outputStream);
-            return outputStream.toByteArray();
 
-        } catch (IOException e) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            document.save(out);
+            return out.toByteArray();
+
+        } catch (Exception e) {
             throw new RuntimeException("Failed to generate invoice PDF", e);
         }
     }
 
+    // 👇 REQUIRED for reports
     public byte[] generatePaymentSummaryPdf(PaymentSummaryResponse summary) {
-        try (PDDocument document = new PDDocument();
-             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+        try (PDDocument document = new PDDocument()) {
 
             PDPage page = new PDPage();
             document.addPage(page);
 
             PDPageContentStream content = new PDPageContentStream(document, page);
-            content.setFont(PDType1Font.HELVETICA_BOLD, 16);
-            content.beginText();
-            content.newLineAtOffset(50, 750);
-            content.showText("Payment Summary Report");
-            content.endText();
 
-            content.setFont(PDType1Font.HELVETICA, 12);
             content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 14);
+            content.setLeading(20f);
             content.newLineAtOffset(50, 700);
+
+            content.showText("Payment Summary Report");
+            content.newLine();
             content.showText("Total Revenue: " + summary.getTotalRevenue());
-            content.newLineAtOffset(0, -20);
-            content.showText("Successful Payments: " + summary.getSuccessfulPayments());
-            content.newLineAtOffset(0, -20);
-            content.showText("Generated Date: " + summary.getGeneratedDate());
+            content.newLine();
+            content.showText("Total Payments: " + summary.getTotalPayments());
+
             content.endText();
-
             content.close();
-            document.save(outputStream);
-            return outputStream.toByteArray();
 
-        } catch (IOException e) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            document.save(out);
+            return out.toByteArray();
+
+        } catch (Exception e) {
             throw new RuntimeException("Failed to generate payment summary PDF", e);
         }
     }
