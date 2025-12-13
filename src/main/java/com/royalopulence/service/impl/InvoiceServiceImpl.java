@@ -8,6 +8,8 @@ import com.royalopulence.model.operation.Payment;
 import com.royalopulence.repository.InvoiceRepository;
 import com.royalopulence.repository.PaymentRepository;
 import com.royalopulence.service.base.InvoiceService;
+import com.royalopulence.util.PdfUtil;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
+    private final PdfUtil pdfUtil;
+
 
     @Override
     public InvoiceResponse createInvoice(InvoiceRequest request) {
@@ -55,6 +59,34 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public InvoiceResponse getInvoiceByPaymentId(String paymentId) {
+    Invoice invoice = invoiceRepository.findByPaymentId(paymentId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException("Invoice not found for paymentId: " + paymentId)
+            );
+    return mapToResponse(invoice);
+    }
+
+    @Override
+    public List<InvoiceResponse> getInvoicesByReservationId(String reservationId) {
+    return invoiceRepository.findByReservationId(reservationId)
+            .stream()
+            .map(this::mapToResponse)
+            .toList();
+    }
+
+    @Override
+    public byte[] downloadInvoicePdf(String invoiceId) {
+    Invoice invoice = invoiceRepository.findById(invoiceId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException("Invoice not found with id: " + invoiceId)
+            );
+
+    return pdfUtil.generateInvoicePdf(invoice);
+    }
+
 
     private InvoiceResponse mapToResponse(Invoice invoice) {
         return new InvoiceResponse(
