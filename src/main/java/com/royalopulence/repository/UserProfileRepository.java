@@ -1,7 +1,11 @@
 package com.royalopulence.repository;
 
 import com.royalopulence.model.core.UserProfile;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface UserProfileRepository extends JpaRepository<UserProfile, Long> {
+import java.util.Optional;
+
+public interface UserProfileRepository extends MongoRepository<UserProfile, String> {
+
+    Optional<UserProfile> findByUserId(String userId);
 }

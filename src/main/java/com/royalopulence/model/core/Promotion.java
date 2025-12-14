@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 package com.royalopulence.model.core;
 
 import jakarta.persistence.*;
@@ -78,5 +76,5 @@ public class Promotion {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
 }
->>>>>>> 886d111055a06478670ef1a182510ccc8a95eeba
