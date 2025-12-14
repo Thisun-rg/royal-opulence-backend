@@ -1,11 +1,15 @@
 
 package com.royalopulence.service.base;
 
-import java.time.LocalDate;
-import java.util.List;     //for recognize List
+import java.util.List;
 
+import com.royalopulence.dto.room.RoomRequest;
 import com.royalopulence.dto.room.RoomResponse;
 
+
 public interface RoomService {
-List<RoomResponse> searchAvailableRooms(LocalDate checkIn, LocalDate checkOut, Integer guests);
+    RoomResponse createRoom(RoomRequest request);
+    List<RoomResponse> getAvailableRooms();
+    void updateRoomStatus(String roomId, String status);
 }
+
