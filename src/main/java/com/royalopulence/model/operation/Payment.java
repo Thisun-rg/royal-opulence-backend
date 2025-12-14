@@ -30,4 +30,8 @@ public class Payment {
 
     // 🔹 Stripe
     private String stripeIntentId;
+
+    // 🔹 Payment expiry (e.g., 15 minutes)
+    private Long expiresAt; 
+
 }

@@ -111,8 +111,13 @@
     		<version>2.0.30</version>
 		</dependency>
 
-
-
+		<!-- Stripe Payment Gateway (Test Mode) -->
+		<dependency>
+    		<groupId>com.stripe</groupId>
+    		<artifactId>stripe-java</artifactId>
+    		<version>24.16.0</version>
+		</dependency>
+	
 	</dependencies>
 
 	<build>

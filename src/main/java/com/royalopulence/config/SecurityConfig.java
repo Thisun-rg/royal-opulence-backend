@@ -1,9 +1,5 @@
 package com.royalopulence.config;
 
-import com.royalopulence.config.JwtAuthenticationFilter;
-
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -32,13 +30,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints — no token required
-                        .requestMatchers("/api/auth/**").permitAll()
-                        // .requestMatchers("/api/setup/**").permitAll() // Disabled after setup
+                // Public endpoints — no token required
+                .requestMatchers("/api/auth/**").permitAll()
+                // .requestMatchers("/api/setup/**").permitAll() // Disabled after setup
 
-                        .requestMatchers("/error").permitAll()
-                        // Everything else requires authentication
-                        .anyRequest().authenticated()
+                .requestMatchers("/error").permitAll()
+                // Everything else requires authentication
+                .anyRequest().authenticated()
                 )
                 // No session, we use JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

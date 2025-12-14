@@ -23,44 +23,62 @@ public class PaymentController {
     private final InvoiceService invoiceService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(@Valid @RequestBody PaymentRequest request) {
+    public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(
+            @Valid @RequestBody PaymentRequest request) {
+
         PaymentResponse response = paymentService.createPayment(request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Payment created", response));
     }
 
+    @PostMapping("/stripe")
+    public ResponseEntity<ApiResponse<PaymentResponse>> createStripePayment(
+            @Valid @RequestBody PaymentRequest request) {
+
+        PaymentResponse response = paymentService.createStripePayment(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Stripe payment created", response));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PaymentResponse>> getPayment(@PathVariable String id) {
-        PaymentResponse response = paymentService.getPaymentById(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Payment found", response));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Payment found", paymentService.getPaymentById(id))
+        );
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PaymentResponse>>> getAllPayments() {
-        List<PaymentResponse> payments = paymentService.getAllPayments();
-        return ResponseEntity.ok(new ApiResponse<>(true, "Payments list", payments));
-    }
-
-    @GetMapping("/by-reservation/{reservationId}")
-    public ResponseEntity<ApiResponse<List<PaymentResponse>>> getByReservation(@PathVariable String reservationId) {
-        List<PaymentResponse> payments = paymentService.getPaymentsByReservationId(reservationId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Payments for reservation", payments));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Payments list", paymentService.getAllPayments())
+        );
     }
 
     @PatchMapping("/{id}/success")
     public ResponseEntity<ApiResponse<PaymentResponse>> markSuccess(@PathVariable String id) {
-        PaymentResponse response = paymentService.markPaymentSuccess(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Payment marked as SUCCESS", response));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Payment SUCCESS", paymentService.markPaymentSuccess(id))
+        );
     }
 
     @PatchMapping("/{id}/failed")
     public ResponseEntity<ApiResponse<PaymentResponse>> markFailed(@PathVariable String id) {
-        PaymentResponse response = paymentService.markPaymentFailed(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Payment marked as FAILED", response));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Payment FAILED", paymentService.markPaymentFailed(id))
+        );
+    }
+
+    @PatchMapping("/{id}/refund")
+    public ResponseEntity<ApiResponse<PaymentResponse>> refundPayment(@PathVariable String id) {
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Payment REFUNDED", paymentService.markPaymentRefunded(id))
+        );
     }
 
     @PostMapping("/invoice")
-    public ResponseEntity<ApiResponse<InvoiceResponse>> createInvoice(@Valid @RequestBody InvoiceRequest request) {
-        InvoiceResponse response = invoiceService.createInvoice(request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Invoice created", response));
+    public ResponseEntity<ApiResponse<InvoiceResponse>> createInvoice(
+            @Valid @RequestBody InvoiceRequest request) {
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Invoice created", invoiceService.createInvoice(request))
+        );
     }
 }

@@ -18,4 +18,9 @@ public interface PaymentService {
     PaymentResponse markPaymentSuccess(String id);
 
     PaymentResponse markPaymentFailed(String id);
+
+    PaymentResponse createStripePayment(PaymentRequest request);
+
+    PaymentResponse markPaymentRefunded(String paymentId);
+
 }
