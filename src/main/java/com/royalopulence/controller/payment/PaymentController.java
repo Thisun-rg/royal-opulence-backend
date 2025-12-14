@@ -81,4 +81,10 @@ public class PaymentController {
                 new ApiResponse<>(true, "Invoice created", invoiceService.createInvoice(request))
         );
     }
+
+    // ---------------- HEALTH CHECK ----------------
+    @GetMapping("/health")
+    public String health() {
+        return "Payment module is up";
+    }
 }

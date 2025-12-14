@@ -3,6 +3,7 @@ package com.royalopulence.service.impl;
 import com.royalopulence.dto.payment.InvoiceRequest;
 import com.royalopulence.dto.payment.PaymentRequest;
 import com.royalopulence.dto.payment.PaymentResponse;
+import com.royalopulence.exception.BusinessException;
 import com.royalopulence.exception.ResourceNotFoundException;
 import com.royalopulence.model.operation.Payment;
 import com.royalopulence.repository.PaymentRepository;
@@ -31,6 +32,7 @@ public class PaymentServiceImpl implements PaymentService {
         return baseAmount + (baseAmount * TAX_RATE);
     }
 
+    // ---------------- CREATE NORMAL PAYMENT ----------------
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
 
@@ -50,17 +52,20 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setCreatedAt(System.currentTimeMillis());
 
         payment = paymentRepository.save(payment);
+
+        auditUtil.log("PAYMENT_CREATED", payment.getId());
         return mapToResponse(payment);
     }
 
+    // ---------------- CREATE STRIPE PAYMENT ----------------
     @Override
     public PaymentResponse createStripePayment(PaymentRequest request) {
 
-        try {
-            double baseAmount = request.getAmount();
-            double taxAmount = baseAmount * TAX_RATE;
-            double totalAmount = baseAmount + taxAmount;
+        double baseAmount = request.getAmount();
+        double taxAmount = baseAmount * TAX_RATE;
+        double totalAmount = baseAmount + taxAmount;
 
+        try {
             var intent = stripePaymentService
                     .createPaymentIntent(totalAmount, request.getCurrency());
 
@@ -82,16 +87,28 @@ public class PaymentServiceImpl implements PaymentService {
             return mapToResponse(payment);
 
         } catch (Exception e) {
-            throw new RuntimeException("Stripe payment failed", e);
+            throw new BusinessException("Stripe payment failed");
         }
     }
 
+    // ---------------- MARK PAYMENT SUCCESS ----------------
     @Override
     public PaymentResponse markPaymentSuccess(String paymentId) {
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(()
                         -> new ResourceNotFoundException("Payment not found: " + paymentId));
+
+        // ✅ STATUS GUARD
+        if ("SUCCESS".equals(payment.getStatus())) {
+            throw new BusinessException("Payment already marked as SUCCESS");
+        }
+
+        // ✅ EXPIRY CHECK
+        if (payment.getExpiresAt() != null
+                && System.currentTimeMillis() > payment.getExpiresAt()) {
+            throw new BusinessException("Payment has expired");
+        }
 
         payment.setStatus("SUCCESS");
         payment = paymentRepository.save(payment);
@@ -108,6 +125,7 @@ public class PaymentServiceImpl implements PaymentService {
         return mapToResponse(payment);
     }
 
+    // ---------------- MARK PAYMENT FAILED ----------------
     @Override
     public PaymentResponse markPaymentFailed(String paymentId) {
 
@@ -115,18 +133,29 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(()
                         -> new ResourceNotFoundException("Payment not found: " + paymentId));
 
+        if ("SUCCESS".equals(payment.getStatus())) {
+            throw new BusinessException("Cannot mark SUCCESS payment as FAILED");
+        }
+
         payment.setStatus("FAILED");
         payment = paymentRepository.save(payment);
 
+        auditUtil.log("PAYMENT_FAILED", paymentId);
         return mapToResponse(payment);
     }
 
+    // ---------------- MARK PAYMENT REFUNDED ----------------
     @Override
     public PaymentResponse markPaymentRefunded(String paymentId) {
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(()
                         -> new ResourceNotFoundException("Payment not found: " + paymentId));
+
+        // ✅ STATUS GUARD
+        if (!"SUCCESS".equals(payment.getStatus())) {
+            throw new BusinessException("Only SUCCESS payments can be refunded");
+        }
 
         payment.setStatus("REFUNDED");
         payment = paymentRepository.save(payment);
@@ -135,14 +164,18 @@ public class PaymentServiceImpl implements PaymentService {
         return mapToResponse(payment);
     }
 
+    // ---------------- GET PAYMENT BY ID ----------------
     @Override
     public PaymentResponse getPaymentById(String paymentId) {
-        return paymentRepository.findById(paymentId)
-                .map(this::mapToResponse)
+
+        Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(()
                         -> new ResourceNotFoundException("Payment not found: " + paymentId));
+
+        return mapToResponse(payment);
     }
 
+    // ---------------- GET ALL PAYMENTS ----------------
     @Override
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findAll()
@@ -151,6 +184,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .collect(Collectors.toList());
     }
 
+    // ---------------- GET PAYMENTS BY RESERVATION ----------------
     @Override
     public List<PaymentResponse> getPaymentsByReservationId(String reservationId) {
         return paymentRepository.findByReservationId(reservationId)
@@ -159,6 +193,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .collect(Collectors.toList());
     }
 
+    // ---------------- MAPPER ----------------
     private PaymentResponse mapToResponse(Payment payment) {
         return new PaymentResponse(
                 payment.getId(),

@@ -2,6 +2,7 @@ package com.royalopulence.service.impl;
 
 import com.royalopulence.dto.payment.InvoiceRequest;
 import com.royalopulence.dto.payment.InvoiceResponse;
+import com.royalopulence.exception.BusinessException;
 import com.royalopulence.exception.ResourceNotFoundException;
 import com.royalopulence.model.operation.Invoice;
 import com.royalopulence.model.operation.Payment;
@@ -25,10 +26,17 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public InvoiceResponse createInvoice(InvoiceRequest request) {
 
+        // ---------------- DUPLICATE CHECK ADDED HERE ----------------
+        invoiceRepository.findByPaymentId(request.getPaymentId())
+                .ifPresent(i -> {
+                    throw new BusinessException("Invoice already exists for this payment" + i.getInvoiceNumber());
+                });
+        // ------------------------------------------------------------
+
         Payment payment = paymentRepository.findById(request.getPaymentId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Payment not found with id: " + request.getPaymentId())
+                .orElseThrow(()
+                        -> new ResourceNotFoundException(
+                        "Payment not found with id: " + request.getPaymentId())
                 );
 
         Invoice invoice = new Invoice();
@@ -48,8 +56,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public InvoiceResponse getInvoiceById(String id) {
         Invoice invoice = invoiceRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Invoice not found with id: " + id)
+                .orElseThrow(()
+                        -> new ResourceNotFoundException("Invoice not found with id: " + id)
                 );
         return mapToResponse(invoice);
     }
@@ -65,9 +73,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public InvoiceResponse getInvoiceByPaymentId(String paymentId) {
         Invoice invoice = invoiceRepository.findByPaymentId(paymentId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Invoice not found for paymentId: " + paymentId)
+                .orElseThrow(()
+                        -> new ResourceNotFoundException(
+                        "Invoice not found for paymentId: " + paymentId)
                 );
         return mapToResponse(invoice);
     }
@@ -83,9 +91,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public byte[] downloadInvoicePdf(String invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Invoice not found with id: " + invoiceId)
+                .orElseThrow(()
+                        -> new ResourceNotFoundException(
+                        "Invoice not found with id: " + invoiceId)
                 );
 
         return pdfUtil.generateInvoicePdf(invoice);
@@ -103,5 +111,3 @@ public class InvoiceServiceImpl implements InvoiceService {
         );
     }
 }
-
-
