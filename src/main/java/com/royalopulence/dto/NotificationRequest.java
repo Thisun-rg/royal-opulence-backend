@@ -1,5 +1,10 @@
 package com.royalopulence.dto;
 
-public class NotificationRequest {
+import lombok.Data;
 
+@Data
+public class NotificationRequest {
+    private String title;
+    private String message;
+    private String userId; // optional
 }
