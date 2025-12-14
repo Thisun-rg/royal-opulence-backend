@@ -1,83 +1,60 @@
 package com.royalopulence.service.impl;
-import com.royalopulence.dto.room.RoomResponse;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import com.royalopulence.model.core.Room;
 import com.royalopulence.repository.RoomRepository;
+import com.royalopulence.dto.room.RoomRequest;
+import com.royalopulence.dto.room.RoomResponse;
 import com.royalopulence.service.base.RoomService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDate;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
 
-    public RoomServiceImpl(RoomRepository roomRepository) {
-        this.roomRepository = roomRepository;
-    }
-
-    // ---------------- CREATE ROOM ----------------
-
     @Override
-    public RoomResponse createRoom(Room room) {
+    public RoomResponse createRoom(RoomRequest request) {
+
+        Room room = Room.builder()
+                .roomNumber(request.getRoomNumber())
+                .roomTypeId(request.getRoomTypeId())
+                .status("AVAILABLE")
+                .build();
+
         Room saved = roomRepository.save(room);
-        return mapToResponse(saved);
+
+        return RoomResponse.builder()
+                .id(saved.getId())
+                .roomNumber(saved.getRoomNumber())
+                .roomTypeId(saved.getRoomTypeId())
+                .status(saved.getStatus())
+                .build();
     }
 
-    // ---------------- GET ROOM BY ID ----------------
-
     @Override
-    public RoomResponse getRoomById(Long id) {
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        return mapToResponse(room);
-    }
-
-    // ---------------- LIST ALL ROOMS ----------------
-
-    @Override
-    public List<RoomResponse> getAllRooms() {
-        return roomRepository.findAll()
+    public List<RoomResponse> getAvailableRooms() {
+        return roomRepository.findByStatus("AVAILABLE")
                 .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .map(room -> RoomResponse.builder()
+                        .id(room.getId())
+                        .roomNumber(room.getRoomNumber())
+                        .roomTypeId(room.getRoomTypeId())
+                        .status(room.getStatus())
+                        .build())
+                .toList();
     }
-
-    // ---------------- SEARCH AVAILABLE ROOMS ----------------
 
     @Override
-    public List<RoomResponse> searchAvailableRooms(
-            LocalDate checkIn,
-            LocalDate checkOut,
-            Integer guests
-    ) {
+    public void updateRoomStatus(String roomId, String status) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        List<Room> rooms = roomRepository.findAvailableRooms(checkIn, checkOut);
-
-        if (guests != null && guests > 0) {
-            rooms = rooms.stream()
-                    .filter(r -> r.getCapacity() >= guests)
-                    .collect(Collectors.toList());
-        }
-
-        return rooms.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    // ---------------- HELPER ----------------
-
-    private RoomResponse mapToResponse(Room room) {
-        RoomResponse response = new RoomResponse();
-        response.setId(room.getId());
-        response.setRoomNumber(room.getRoomNumber());
-        response.setRoomType(room.getRoomType());
-        response.setCapacity(room.getCapacity());
-        response.setPricePerNight(room.getPricePerNight());
-        response.setAmenities(room.getAmenities());
-        return response;
+        room.setStatus(status);
+        roomRepository.save(room);
     }
 }
