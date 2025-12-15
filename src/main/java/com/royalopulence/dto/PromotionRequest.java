@@ -1,5 +1,5 @@
 package com.royalopulence.dto;
 
-public class PromotionRequest {
+import lombok.Data;
+import java.util.Date;
 
-}
