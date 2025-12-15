@@ -1,5 +1,14 @@
 package com.royalopulence.dto;
 
-public class PromotionResponse {
+import lombok.Data;
+import java.util.Date;
 
+@Data
+public class PromotionResponse {
+    private String id;
+    private String title;
+    private String description;
+    private Date startDate;
+    private Date endDate;
+    private boolean active;
 }
