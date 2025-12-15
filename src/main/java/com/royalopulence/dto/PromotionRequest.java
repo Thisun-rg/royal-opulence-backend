@@ -10,4 +10,7 @@ public class PromotionRequest {
     private Date startDate;
     private Date endDate;
     private boolean active;
+
+    // ⭐ NEW
+    private String targetUserId; // optional
 }

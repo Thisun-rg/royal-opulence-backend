@@ -17,18 +17,23 @@ public class Promotion {
     private Date endDate;
     private boolean active;
 
-    public Promotion() {
-        this.active = true;
-    }
+    // ⭐ NEW
+    private String targetUserId; // null = general promotion
 
-    public Promotion(String title, String description, Date startDate, Date endDate, boolean active) {
+    public Promotion() {}
+
+    public Promotion(String title, String description, Date startDate,
+                     Date endDate, boolean active, String targetUserId) {
         this.title = title;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
         this.active = active;
+        this.targetUserId = targetUserId;
     }
-     public String getId() { return id; }
+
+    // getters & setters
+    public String getId() { return id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getDescription() { return description; }
@@ -40,4 +45,8 @@ public class Promotion {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 
+    public String getTargetUserId() { return targetUserId; }
+    public void setTargetUserId(String targetUserId) {
+        this.targetUserId = targetUserId;
+    }
 }
