@@ -1,8 +1,8 @@
 package com.royalopulence.service.impl;
 
-import com.royalopulence.dto.marketing.PromotionRequest;
-import com.royalopulence.dto.marketing.PromotionResponse;
-import com.royalopulence.model.marketing.Promotion;
+import com.royalopulence.dto.PromotionRequest;
+import com.royalopulence.dto.PromotionResponse;
+import com.royalopulence.model.core.Promotion;
 import com.royalopulence.repository.PromotionRepository;
 import com.royalopulence.service.base.PromotionService;
 import lombok.RequiredArgsConstructor;
