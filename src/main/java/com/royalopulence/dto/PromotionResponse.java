@@ -11,4 +11,7 @@ public class PromotionResponse {
     private Date startDate;
     private Date endDate;
     private boolean active;
+
+    // ⭐ NEW
+    private String targetUserId;
 }
