@@ -14,4 +14,6 @@ public interface PromotionService {
     PromotionResponse getPromotionById(String id);
 
     List<PromotionResponse> getPromotionsForUser(String userId);
+
+    
 }
