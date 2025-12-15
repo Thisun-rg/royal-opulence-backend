@@ -1,5 +1,7 @@
 package com.royalopulence.repository;
 
-public class PromotionRepository {
+import com.royalopulence.model.core.Promotion;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
-}
+
