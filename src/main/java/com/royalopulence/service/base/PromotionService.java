@@ -12,4 +12,6 @@ public interface PromotionService {
     List<PromotionResponse> getAllPromotions();
 
     PromotionResponse getPromotionById(String id);
+
+    List<PromotionResponse> getPromotionsForUser(String userId);
 }

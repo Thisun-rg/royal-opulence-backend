@@ -29,4 +29,9 @@ public class PromotionController {
     public PromotionResponse getPromotionById(@PathVariable String id) {
         return promotionService.getPromotionById(id);
     }
+    @GetMapping("/user/{userId}")
+public List<PromotionResponse> getPromotionsForUser(@PathVariable String userId) {
+    return promotionService.getPromotionsForUser(userId);
+}
+
 }
