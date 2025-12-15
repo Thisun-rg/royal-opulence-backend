@@ -1,17 +1,20 @@
 package com.royalopulence.dto;
 
 import lombok.Data;
-import java.util.Date;
+
+import java.time.LocalDateTime;
 
 @Data
 public class PromotionResponse {
+
     private String id;
     private String title;
     private String description;
-    private Date startDate;
-    private Date endDate;
-    private boolean active;
+    private int discount;
+    private String userId;
 
-    // ⭐ NEW
-    private String targetUserId;
+    // ✅ NEW FIELD
+    private LocalDateTime expiryDate;
+
+    private LocalDateTime createdAt;
 }
