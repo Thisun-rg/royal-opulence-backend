@@ -3,6 +3,7 @@ package com.royalopulence.service.impl;
 import com.royalopulence.dto.PromotionRequest;
 import com.royalopulence.dto.PromotionResponse;
 import com.royalopulence.model.core.Promotion;
+import com.royalopulence.model.core.PromotionStatus;
 import com.royalopulence.repository.PromotionRepository;
 import com.royalopulence.service.base.PromotionService;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +27,11 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setDescription(request.getDescription());
         promotion.setDiscount(request.getDiscount());
         promotion.setUserId(request.getUserId());
-
-        // ✅ EXPIRY DATE
         promotion.setExpiryDate(request.getExpiryDate());
-
-        // ✅ CREATED TIME
         promotion.setCreatedAt(LocalDateTime.now());
+
+        // ✅ AUTO STATUS
+        promotion.setStatus(calculateStatus(request.getExpiryDate()));
 
         Promotion saved = promotionRepository.save(promotion);
         return mapToResponse(saved);
@@ -41,7 +41,10 @@ public class PromotionServiceImpl implements PromotionService {
     public List<PromotionResponse> getAllPromotions() {
         return promotionRepository.findAll()
                 .stream()
-                .map(this::mapToResponse)
+                .map(promotion -> {
+                    promotion.setStatus(calculateStatus(promotion.getExpiryDate()));
+                    return mapToResponse(promotion);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -49,6 +52,8 @@ public class PromotionServiceImpl implements PromotionService {
     public PromotionResponse getPromotionById(String id) {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Promotion not found"));
+
+        promotion.setStatus(calculateStatus(promotion.getExpiryDate()));
         return mapToResponse(promotion);
     }
 
@@ -56,11 +61,14 @@ public class PromotionServiceImpl implements PromotionService {
     public List<PromotionResponse> getPromotionsForUser(String userId) {
         return promotionRepository.findByUserId(userId)
                 .stream()
-                .map(this::mapToResponse)
+                .map(promotion -> {
+                    promotion.setStatus(calculateStatus(promotion.getExpiryDate()));
+                    return mapToResponse(promotion);
+                })
                 .collect(Collectors.toList());
     }
 
-    // 🔁 ENTITY → DTO MAPPER
+    // 🔁 ENTITY → DTO
     private PromotionResponse mapToResponse(Promotion promotion) {
 
         PromotionResponse response = new PromotionResponse();
@@ -71,7 +79,18 @@ public class PromotionServiceImpl implements PromotionService {
         response.setUserId(promotion.getUserId());
         response.setExpiryDate(promotion.getExpiryDate());
         response.setCreatedAt(promotion.getCreatedAt());
+        response.setStatus(promotion.getStatus());
 
         return response;
+    }
+
+    // 🧠 STATUS CALCULATION
+    private PromotionStatus calculateStatus(LocalDateTime expiryDate) {
+        if (expiryDate == null) {
+            return PromotionStatus.ACTIVE;
+        }
+        return expiryDate.isBefore(LocalDateTime.now())
+                ? PromotionStatus.EXPIRED
+                : PromotionStatus.ACTIVE;
     }
 }

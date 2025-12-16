@@ -1,6 +1,7 @@
 package com.royalopulence.model.core;
 
 import lombok.Data;
+import com.royalopulence.model.core.PromotionStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -22,4 +23,5 @@ public class Promotion {
     private LocalDateTime expiryDate;
 
     private LocalDateTime createdAt;
+     private PromotionStatus status;
 }

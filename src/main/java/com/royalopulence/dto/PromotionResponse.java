@@ -1,5 +1,5 @@
 package com.royalopulence.dto;
-
+import com.royalopulence.model.core.PromotionStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,8 +13,10 @@ public class PromotionResponse {
     private int discount;
     private String userId;
 
-    // ✅ NEW FIELD
+   
     private LocalDateTime expiryDate;
 
     private LocalDateTime createdAt;
+
+    private PromotionStatus status;
 }
