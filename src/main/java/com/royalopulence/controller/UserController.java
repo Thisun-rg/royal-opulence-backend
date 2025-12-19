@@ -35,18 +35,23 @@ public class UserController {
 
     // Update profile info
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
+    public ResponseEntity<User> updateUser(
+            @PathVariable String id,
+            @RequestBody User updatedUser) {
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         user.setName(updatedUser.getName());
         userRepository.save(user);
+
         return ResponseEntity.ok(user);
     }
 
     // Delete a user (Admin only)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }

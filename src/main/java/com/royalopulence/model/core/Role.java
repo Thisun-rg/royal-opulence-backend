@@ -1,19 +1,17 @@
 package com.royalopulence.model.core;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "roles")
+@Document(collection = "roles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Role {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
-    @Column(unique = true, nullable = false)
     private String name;
 }
-
