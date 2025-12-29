@@ -1,21 +1,25 @@
 package com.royalopulence.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.royalopulence.dto.payment.InvoiceRequest;
 import com.royalopulence.dto.payment.PaymentRequest;
 import com.royalopulence.dto.payment.PaymentResponse;
 import com.royalopulence.exception.BusinessException;
 import com.royalopulence.exception.ResourceNotFoundException;
 import com.royalopulence.model.operation.Payment;
+import com.royalopulence.model.utility.PaymentMethod;
+import com.royalopulence.model.utility.PaymentStatus;
 import com.royalopulence.repository.PaymentRepository;
 import com.royalopulence.service.base.InvoiceService;
 import com.royalopulence.service.base.PaymentService;
 import com.royalopulence.service.payment.StripePaymentService;
 import com.royalopulence.util.AuditUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -28,89 +32,87 @@ public class PaymentServiceImpl implements PaymentService {
 
     private static final double TAX_RATE = 0.10;
 
-    private double calculateTotal(double baseAmount) {
-        return baseAmount + (baseAmount * TAX_RATE);
+    private double total(double base) {
+        return base + (base * TAX_RATE);
     }
 
-    // ---------------- CREATE NORMAL PAYMENT ----------------
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
 
-        double baseAmount = request.getAmount();
-        double totalAmount = calculateTotal(baseAmount);
-        double taxAmount = totalAmount - baseAmount;
+        // ⭐ NEW SAFETY CHECK
+        if (request.getAmount() <= 0) {
+            throw new BusinessException("Amount must be positive");
+        }
 
         Payment payment = new Payment();
         payment.setReservationId(request.getReservationId());
-        payment.setBaseAmount(baseAmount);
-        payment.setTaxAmount(taxAmount);
-        payment.setTotalAmount(totalAmount);
+        payment.setBaseAmount(request.getAmount());
+        payment.setTaxAmount(request.getAmount() * TAX_RATE);
+        payment.setTotalAmount(total(request.getAmount()));
         payment.setCurrency(request.getCurrency());
         payment.setDescription(request.getDescription());
-        payment.setStatus("PENDING");
-        payment.setMethod("NOT_SET");
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setMethod(PaymentMethod.NOT_SET);
         payment.setCreatedAt(System.currentTimeMillis());
 
         payment = paymentRepository.save(payment);
-
         auditUtil.log("PAYMENT_CREATED", payment.getId());
-        return mapToResponse(payment);
+
+        return map(payment);
     }
 
-    // ---------------- CREATE STRIPE PAYMENT ----------------
     @Override
     public PaymentResponse createStripePayment(PaymentRequest request) {
 
-        double baseAmount = request.getAmount();
-        double taxAmount = baseAmount * TAX_RATE;
-        double totalAmount = baseAmount + taxAmount;
+        if (request.getAmount() <= 0) {
+            throw new BusinessException("Amount must be positive");
+        }
 
         try {
-            var intent = stripePaymentService
-                    .createPaymentIntent(totalAmount, request.getCurrency());
+            var intent = stripePaymentService.createPaymentIntent(
+                    total(request.getAmount()),
+                    request.getCurrency()
+            );
 
             Payment payment = new Payment();
             payment.setReservationId(request.getReservationId());
-            payment.setBaseAmount(baseAmount);
-            payment.setTaxAmount(taxAmount);
-            payment.setTotalAmount(totalAmount);
+            payment.setBaseAmount(request.getAmount());
+            payment.setTaxAmount(request.getAmount() * TAX_RATE);
+            payment.setTotalAmount(total(request.getAmount()));
             payment.setCurrency(request.getCurrency());
-            payment.setStatus("PENDING");
-            payment.setMethod("STRIPE");
+            payment.setStatus(PaymentStatus.PENDING);
+            payment.setMethod(PaymentMethod.STRIPE);
             payment.setStripeIntentId(intent.getId());
             payment.setCreatedAt(System.currentTimeMillis());
-            payment.setExpiresAt(System.currentTimeMillis() + (15 * 60 * 1000));
+            payment.setExpiresAt(System.currentTimeMillis() + 15 * 60 * 1000);
 
             payment = paymentRepository.save(payment);
-
             auditUtil.log("STRIPE_PAYMENT_CREATED", payment.getId());
-            return mapToResponse(payment);
+
+            return map(payment);
 
         } catch (Exception e) {
             throw new BusinessException("Stripe payment failed");
         }
     }
 
-    // ---------------- MARK PAYMENT SUCCESS ----------------
     @Override
-    public PaymentResponse markPaymentSuccess(String paymentId) {
+    public PaymentResponse markPaymentSuccess(String id) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(()
-                        -> new ResourceNotFoundException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
 
-        // ✅ STATUS GUARD
-        if ("SUCCESS".equals(payment.getStatus())) {
-            throw new BusinessException("Payment already marked as SUCCESS");
+        if (payment.getStatus() == PaymentStatus.SUCCESS
+                || payment.getStatus() == PaymentStatus.REFUNDED) {
+            throw new BusinessException("Invalid payment state change");
         }
 
-        // ✅ EXPIRY CHECK
         if (payment.getExpiresAt() != null
                 && System.currentTimeMillis() > payment.getExpiresAt()) {
-            throw new BusinessException("Payment has expired");
+            throw new BusinessException("Payment expired");
         }
 
-        payment.setStatus("SUCCESS");
+        payment.setStatus(PaymentStatus.SUCCESS);
         payment = paymentRepository.save(payment);
 
         InvoiceRequest invoiceRequest = new InvoiceRequest();
@@ -120,91 +122,75 @@ public class PaymentServiceImpl implements PaymentService {
         invoiceRequest.setCurrency(payment.getCurrency());
 
         invoiceService.createInvoice(invoiceRequest);
+        auditUtil.log("PAYMENT_SUCCESS", id);
 
-        auditUtil.log("PAYMENT_SUCCESS", paymentId);
-        return mapToResponse(payment);
+        return map(payment);
     }
 
-    // ---------------- MARK PAYMENT FAILED ----------------
     @Override
-    public PaymentResponse markPaymentFailed(String paymentId) {
+    public PaymentResponse markPaymentFailed(String id) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(()
-                        -> new ResourceNotFoundException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
 
-        if ("SUCCESS".equals(payment.getStatus())) {
-            throw new BusinessException("Cannot mark SUCCESS payment as FAILED");
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            throw new BusinessException("Cannot fail SUCCESS payment");
         }
 
-        payment.setStatus("FAILED");
+        payment.setStatus(PaymentStatus.FAILED);
         payment = paymentRepository.save(payment);
+        auditUtil.log("PAYMENT_FAILED", id);
 
-        auditUtil.log("PAYMENT_FAILED", paymentId);
-        return mapToResponse(payment);
+        return map(payment);
     }
 
-    // ---------------- MARK PAYMENT REFUNDED ----------------
     @Override
-    public PaymentResponse markPaymentRefunded(String paymentId) {
+    public PaymentResponse markPaymentRefunded(String id) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(()
-                        -> new ResourceNotFoundException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
 
-        // ✅ STATUS GUARD
-        if (!"SUCCESS".equals(payment.getStatus())) {
+        if (payment.getStatus() != PaymentStatus.SUCCESS) {
             throw new BusinessException("Only SUCCESS payments can be refunded");
         }
 
-        payment.setStatus("REFUNDED");
+        payment.setStatus(PaymentStatus.REFUNDED);
         payment = paymentRepository.save(payment);
+        auditUtil.log("PAYMENT_REFUNDED", id);
 
-        auditUtil.log("PAYMENT_REFUNDED", paymentId);
-        return mapToResponse(payment);
+        return map(payment);
     }
 
-    // ---------------- GET PAYMENT BY ID ----------------
     @Override
-    public PaymentResponse getPaymentById(String paymentId) {
-
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(()
-                        -> new ResourceNotFoundException("Payment not found: " + paymentId));
-
-        return mapToResponse(payment);
+    public PaymentResponse getPaymentById(String id) {
+        return paymentRepository.findById(id)
+                .map(this::map)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
     }
 
-    // ---------------- GET ALL PAYMENTS ----------------
     @Override
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::map).collect(Collectors.toList());
     }
 
-    // ---------------- GET PAYMENTS BY RESERVATION ----------------
     @Override
     public List<PaymentResponse> getPaymentsByReservationId(String reservationId) {
         return paymentRepository.findByReservationId(reservationId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::map).collect(Collectors.toList());
     }
 
-    // ---------------- MAPPER ----------------
-    private PaymentResponse mapToResponse(Payment payment) {
+    private PaymentResponse map(Payment p) {
         return new PaymentResponse(
-                payment.getId(),
-                payment.getReservationId(),
-                payment.getBaseAmount(),
-                payment.getTaxAmount(),
-                payment.getTotalAmount(),
-                payment.getCurrency(),
-                payment.getStatus(),
-                payment.getMethod(),
-                payment.getCreatedAt()
+                p.getId(),
+                p.getReservationId(),
+                p.getBaseAmount(),
+                p.getTaxAmount(),
+                p.getTotalAmount(),
+                p.getCurrency(),
+                p.getStatus().name(),
+                p.getMethod().name(),
+                p.getCreatedAt()
         );
     }
 }

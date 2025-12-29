@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.royalopulence.dto.report.PaymentSummaryResponse;
 import com.royalopulence.model.operation.Payment;
+import com.royalopulence.model.utility.PaymentStatus;
 import com.royalopulence.repository.PaymentRepository;
 import com.royalopulence.service.base.ReportService;
 import com.royalopulence.util.PdfUtil;
@@ -20,20 +21,20 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public PaymentSummaryResponse getPaymentSummary() {
 
-    double totalRevenue = paymentRepository.findAll().stream()
-            .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
-            .mapToDouble(Payment::getTotalAmount)
-            .sum();
+        double revenue = paymentRepository.findAll().stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .mapToDouble(Payment::getTotalAmount)
+                .sum();
 
-    long totalCount = paymentRepository.count();
+        long count = paymentRepository.findAll().stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .count();
 
-    return new PaymentSummaryResponse(totalRevenue, totalCount);
+        return new PaymentSummaryResponse(revenue, count);
     }
-
 
     @Override
     public byte[] downloadPaymentSummaryPdf() {
-        PaymentSummaryResponse summary = getPaymentSummary();
-        return pdfUtil.generatePaymentSummaryPdf(summary);
+        return pdfUtil.generatePaymentSummaryPdf(getPaymentSummary());
     }
 }

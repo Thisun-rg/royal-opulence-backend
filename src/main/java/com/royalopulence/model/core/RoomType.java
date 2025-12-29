@@ -6,7 +6,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.Indexed; // if needed
 import java.util.*; // List, Date, Set, etc.
 
-
 public class RoomType {
 
 }

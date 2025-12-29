@@ -3,6 +3,9 @@ package com.royalopulence.model.operation;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.royalopulence.model.utility.PaymentMethod;
+import com.royalopulence.model.utility.PaymentStatus;
+
 import lombok.Data;
 
 @Data
@@ -14,24 +17,25 @@ public class Payment {
 
     private String reservationId;
 
-    // 🔹 Financial fields
+    // Financials
     private Double baseAmount;
     private Double taxAmount;
     private Double totalAmount;
-
     private String currency;
 
-    // 🔹 Payment lifecycle
-    private String status;   // PENDING, SUCCESS, FAILED, REFUNDED
-    private String method;   // STRIPE, PAYHERE, NOT_SET
+    // Lifecycle (ENUMS – Mongo handles as String automatically)
+    private PaymentStatus status;
+    private PaymentMethod method;
 
     private String description;
-    private Long createdAt;
 
-    // 🔹 Stripe
+    private Long createdAt;
+    private Long expiresAt;
+
+    // Stripe
     private String stripeIntentId;
 
-    // 🔹 Payment expiry (e.g., 15 minutes)
-    private Long expiresAt; 
-
+    // Hotel-grade accounting (optional, future-ready)
+    private Double exchangeRate;
+    private Double amountLkr;
 }

@@ -1,16 +1,23 @@
 package com.royalopulence.service.impl;
 
-import com.royalopulence.dto.auth.*;
-import com.royalopulence.model.core.*;
-import com.royalopulence.repository.*;
-import com.royalopulence.service.base.UserService;
-import com.royalopulence.util.JwtUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.*;
+import java.util.Collections;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import com.royalopulence.dto.auth.AuthResponse;
+import com.royalopulence.dto.auth.LoginRequest;
+import com.royalopulence.dto.auth.RegisterRequest;
+import com.royalopulence.model.core.Role;
+import com.royalopulence.model.core.User;
+import com.royalopulence.repository.RoleRepository;
+import com.royalopulence.repository.UserRepository;
+import com.royalopulence.service.base.UserService;
+import com.royalopulence.util.JwtUtil;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +50,6 @@ public AuthResponse register(RegisterRequest request) {
     String token = jwtUtil.generateToken(saved.getEmail());
     return new AuthResponse(token, saved.getEmail(), "GUEST");
 }
-
 
     @Override
     public AuthResponse login(LoginRequest request) {
