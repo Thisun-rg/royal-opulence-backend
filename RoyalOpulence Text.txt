@@ -7,7 +7,8 @@ git add src/main/java/com/royalopulence/service/ReportServiceImpl.java
 git commit -m "implement payment module with Stripe integration and automatic invoice generation"
 git push 
 
-
+sk_test_51SegGzL6FIjjiPhXreIsl3JRGxCa013KTJZMPA8lug3xXANDgArXcFOCAhiyWJZvMd8cmj3FoWzD7dmVnWz7jxXe001C7Nzdnx
+stripe.secret.key=sk_test_51SegGzL6FIjjiPhXreIsl3JRGxCa013KTJZMPA8lug3xXANDgArXcFOCAhiyWJZvMd8cmj3FoWzD7dmVnWz7jxXe001C7Nzdnx
 
 mvn clean
 mvn install
