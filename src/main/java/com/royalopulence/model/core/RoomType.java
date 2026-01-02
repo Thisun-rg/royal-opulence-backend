@@ -3,10 +3,18 @@ package com.royalopulence.model.core;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.index.Indexed; // if needed
-import java.util.*; // List, Date, Set, etc.
 
-
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "room_types")
 public class RoomType {
 
+    @Id
+    private String id;
+
+    private String name;           // Deluxe, Suite, Standard
+    private String description;
+    private double pricePerNight;
 }
