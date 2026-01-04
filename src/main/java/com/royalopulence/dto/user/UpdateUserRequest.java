@@ -1,5 +1,10 @@
 package com.royalopulence.dto.user;
 
-public class UpdateUserRequest {
+import lombok.Data;
 
+@Data
+public class UpdateUserRequest {
+    private String name;
+    private String phone;
+    private String address;
 }
