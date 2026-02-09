@@ -6,17 +6,16 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PaymentResponse {
-
-    private String paymentId;
+    private String id;
     private String reservationId;
-
-    // 🔹 Clear financial breakdown
     private Double baseAmount;
     private Double taxAmount;
     private Double totalAmount;
-
     private String currency;
-    private String status;        // PENDING, SUCCESS, FAILED
-    private String method;        // NOT_SET, STRIPE
+    private String status;
+    private String method;
     private Long createdAt;
+
+    // ✅ Stripe
+    private String clientSecret;
 }

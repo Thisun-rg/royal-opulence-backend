@@ -8,5 +8,9 @@ import java.util.List;
 public interface ReservationRepository extends MongoRepository<Reservation, String> {
 
     List<Reservation> findByUserId(String userId);
-    List<Reservation> findByRoomId(String roomId);
+    //List<Reservation> findByRoomId(String roomId);
+    List<Reservation> findByRoomIdsContaining(String roomId);
+
+
+    
 }

@@ -23,4 +23,6 @@ public interface PaymentService {
 
     PaymentResponse markPaymentRefunded(String paymentId);
 
+    PaymentResponse refundByReservation(String reservationId, double refundAmount);
+
 }

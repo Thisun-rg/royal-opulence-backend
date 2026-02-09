@@ -1,7 +1,7 @@
 package com.royalopulence.model.utility;
 
 public enum PaymentMethod {
-    NOT_SET,
+    ONLINE,
     STRIPE,
-    PAYHERE
+    CASH
 }

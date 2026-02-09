@@ -22,12 +22,12 @@ public class ReportServiceImpl implements ReportService {
     public PaymentSummaryResponse getPaymentSummary() {
 
         double revenue = paymentRepository.findAll().stream()
-                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .filter(p -> p.getStatus() == PaymentStatus.PAID)
                 .mapToDouble(Payment::getTotalAmount)
                 .sum();
 
         long count = paymentRepository.findAll().stream()
-                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .filter(p -> p.getStatus() == PaymentStatus.PAID)
                 .count();
 
         return new PaymentSummaryResponse(revenue, count);

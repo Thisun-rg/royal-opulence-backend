@@ -1,4 +1,4 @@
-package com.royalopulence.model.utility;
+package com.royalopulence.model.core;
 
 public enum PaymentStatus {
     PENDING,
@@ -6,4 +6,3 @@ public enum PaymentStatus {
     REFUNDED,
     FAILED
 }
-

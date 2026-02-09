@@ -40,7 +40,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                         new ResourceNotFoundException("Payment not found"));
 
         // ENUM-SAFE RULE
-        if (payment.getStatus() != PaymentStatus.SUCCESS) {
+        if (payment.getStatus() != PaymentStatus.PAID) {
             throw new BusinessException(
                     "Invoice allowed only for SUCCESS payments");
         }

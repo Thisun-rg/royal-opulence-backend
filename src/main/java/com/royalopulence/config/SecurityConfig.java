@@ -3,7 +3,9 @@ package com.royalopulence.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,14 +31,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults()) // ✅ IMPORTANT (connects to your CorsConfig)
                 .authorizeHttpRequests(auth -> auth
-                // Public endpoints — no token required
-                .requestMatchers("/api/auth/**").permitAll()
-                // .requestMatchers("/api/setup/**").permitAll() // Disabled after setup
+                        // ✅ IMPORTANT: allow CORS preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                .requestMatchers("/error").permitAll()
-                // Everything else requires authentication
-                .anyRequest().authenticated()
+                        // Public endpoints — no token required
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+
+                        // Everything else requires authentication
+                        .anyRequest().authenticated()
                 )
                 // No session, we use JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

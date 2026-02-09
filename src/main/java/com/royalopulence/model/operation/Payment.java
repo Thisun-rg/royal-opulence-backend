@@ -38,4 +38,10 @@ public class Payment {
     // Hotel-grade accounting (optional, future-ready)
     private Double exchangeRate;
     private Double amountLkr;
+
+    private Double refundAmount;
+    private Long refundedAt;
+
+    private String stripeClientSecret; // store so you can return it easily if needed
+
 }
