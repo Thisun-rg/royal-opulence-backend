@@ -17,5 +17,5 @@ public class PaymentResponse {
     private Long createdAt;
 
     // ✅ Stripe
-    private String clientSecret;
+    private String StripeClientSecret;
 }

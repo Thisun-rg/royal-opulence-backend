@@ -32,42 +32,35 @@ public class BookingServiceImpl implements BookingService {
     private final RoomTypeRepository roomTypeRepository;
     private final ReservationRepository reservationRepository;
 
-    // 🔗 Sanduni’s payment module
     private final PaymentService paymentService;
 
     private static final double TAX_RATE = 0.10;
     private static final double FULL_CAPACITY_MULTIPLIER = 1.25; // +25%
     private static final int MAX_GUESTS_PER_ROOM = 2;
 
-    // =========================================================
-    // CREATE RESERVATION
-    // =========================================================
     @Override
     public BookingResponse createReservation(String userId, BookingRequest request) {
 
         Integer roomsReqObj = request.getRooms();
-Integer guestsReqObj = request.getGuests();
+        Integer guestsReqObj = request.getGuests();
 
-int roomsRequested = (roomsReqObj == null ? 1 : roomsReqObj);
-int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
-
+        int roomsRequested = (roomsReqObj == null ? 1 : roomsReqObj);
+        int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
 
         if (roomsRequested <= 0) throw new RuntimeException("Rooms must be at least 1");
         if (guestsRequested <= 0) throw new RuntimeException("Guests must be at least 1");
 
-        // ✅ Max 2 guests per room
         if (guestsRequested > roomsRequested * MAX_GUESTS_PER_ROOM) {
             throw new RuntimeException("Max 2 guests per room. Reduce guests or increase rooms.");
         }
 
-        // 1️⃣ Calculate nights
         long nights = ChronoUnit.DAYS.between(request.getCheckInDate(), request.getCheckOutDate());
         if (nights <= 0) throw new RuntimeException("Invalid booking dates");
 
-        // 2️⃣ Resolve room type (accept CODE or MongoId)
+        // ✅ Accept CODE (EXECUTIVE) or MongoId (24 hex)
         RoomType roomType = resolveRoomType(request.getRoomTypeId());
 
-        // 3️⃣ Pick N available rooms by REAL roomTypeId (Mongo _id)
+        // ✅ IMPORTANT: rooms.roomTypeId stores RoomType._id
         List<Room> availableRooms = roomRepository.findByRoomTypeIdAndStatus(roomType.getId(), "AVAILABLE");
 
         if (availableRooms.size() < roomsRequested) {
@@ -77,7 +70,6 @@ int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
         List<Room> selectedRooms = availableRooms.subList(0, roomsRequested);
         List<String> roomIds = selectedRooms.stream().map(Room::getId).toList();
 
-        // 4️⃣ Price calculation (backend matches frontend)
         double baseAmount = nights * roomType.getPricePerNight() * roomsRequested;
 
         boolean fullCapacity = (guestsRequested == roomsRequested * MAX_GUESTS_PER_ROOM);
@@ -86,7 +78,6 @@ int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
         double taxAmount = subTotal * TAX_RATE;
         double totalAmount = subTotal + taxAmount;
 
-        // 5️⃣ Save reservation with roomIds
         Reservation reservation = Reservation.builder()
                 .userId(userId)
                 .roomIds(roomIds)
@@ -102,55 +93,53 @@ int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        // 6️⃣ Mark all selected rooms as RESERVED
         selectedRooms.forEach(r -> r.setStatus("RESERVED"));
         roomRepository.saveAll(selectedRooms);
 
-        // 7️⃣ Create payment (Sanduni module)
         PaymentRequest paymentRequest = new PaymentRequest();
         paymentRequest.setReservationId(savedReservation.getId());
         paymentRequest.setAmount(totalAmount);
         paymentRequest.setCurrency("LKR");
         paymentRequest.setDescription("Room booking payment");
 
-        PaymentResponse paymentResponse = paymentService.createPayment(paymentRequest);
+        PaymentResponse paymentResponse = paymentService.createStripePayment(paymentRequest);
 
-        // (Optional but recommended) store payment info in reservation
+
+        // Optional: store payment fields inside reservation (only if your Reservation has these fields)
         savedReservation.setPaymentId(paymentResponse.getId());
         savedReservation.setPaymentStatus(paymentResponse.getStatus());
         reservationRepository.save(savedReservation);
 
-        // 8️⃣ Response
         return BookingResponse.builder()
-                .reservationId(savedReservation.getId())
-                .roomIds(roomIds)
-                .roomTypeId(roomType.getId())
-                .rooms(roomsRequested)
-                .guests(guestsRequested)
-                .checkInDate(savedReservation.getCheckInDate())
-                .checkOutDate(savedReservation.getCheckOutDate())
-                .totalAmount(totalAmount)
-                .status(savedReservation.getStatus().name())
-                .paymentId(paymentResponse.getId())
-                .paymentStatus(paymentResponse.getStatus())
-                .build();
+        .reservationId(savedReservation.getId())
+        .roomIds(roomIds)
+        .roomTypeId(roomType.getId())
+        .rooms(roomsRequested)
+        .guests(guestsRequested)
+        .checkInDate(savedReservation.getCheckInDate())
+        .checkOutDate(savedReservation.getCheckOutDate())
+        .totalAmount(totalAmount)
+        .status(savedReservation.getStatus().name())
+        .paymentId(paymentResponse.getId())
+        .paymentStatus(paymentResponse.getStatus())
+
+        // ✅ IMPORTANT: send to frontend Checkout page
+        .clientSecret(paymentResponse.getStripeClientSecret())
+
+        .build();
+
     }
 
-    // =========================================================
-    // CANCEL RESERVATION
-    // =========================================================
     @Override
     public CancelBookingResponse cancelReservation(String reservationId, String userId) {
 
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-        // 🔐 Ownership check
         if (!reservation.getUserId().equals(userId)) {
             throw new RuntimeException("You are not allowed to cancel this booking");
         }
 
-        // 🔁 Already cancelled
         if (reservation.getStatus() == ReservationStatus.CANCELLED) {
             return CancelBookingResponse.builder()
                     .reservationId(reservation.getId())
@@ -163,7 +152,6 @@ int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
                     .build();
         }
 
-        // ⏱ Cancellation policy (check-in at noon)
         LocalDateTime checkInDateTime = reservation.getCheckInDate().atTime(LocalTime.NOON);
         long hoursBefore = ChronoUnit.HOURS.between(LocalDateTime.now(), checkInDateTime);
 
@@ -174,20 +162,17 @@ int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
 
         double refundAmount = reservation.getTotalAmount() * refundPercentage;
 
-        // 1️⃣ Update reservation
         ReservationStatus previousStatus = reservation.getStatus();
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservation.setCancelledAt(LocalDateTime.now());
         reservationRepository.save(reservation);
 
-        // 2️⃣ Free ALL rooms
         if (reservation.getRoomIds() != null && !reservation.getRoomIds().isEmpty()) {
             List<Room> roomsToFree = roomRepository.findAllById(reservation.getRoomIds());
             roomsToFree.forEach(r -> r.setStatus("AVAILABLE"));
             roomRepository.saveAll(roomsToFree);
         }
 
-        // 3️⃣ Refund (if applicable)
         PaymentResponse paymentResponse = paymentService.refundByReservation(reservationId, refundAmount);
 
         return CancelBookingResponse.builder()
@@ -204,15 +189,11 @@ int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
                 .build();
     }
 
-    // =========================================================
-    // HELPERS
-    // =========================================================
     private RoomType resolveRoomType(String input) {
         if (input == null || input.isBlank()) {
             throw new RuntimeException("roomTypeId is required");
         }
 
-        // If looks like Mongo ObjectId
         boolean looksLikeObjectId = input.matches("^[a-fA-F0-9]{24}$");
 
         if (looksLikeObjectId) {
@@ -220,8 +201,6 @@ int guestsRequested = (guestsReqObj == null ? 1 : guestsReqObj);
                     .orElseThrow(() -> new RuntimeException("Room type not found: " + input));
         }
 
-        // Else treat as CODE (DELUXE/EXECUTIVE/etc.) or NAME (if you use name)
-        // ✅ Ensure you have findByCodeIgnoreCase in repository
         return roomTypeRepository.findByCodeIgnoreCase(input)
                 .orElseThrow(() -> new RuntimeException("Room type not found: " + input));
     }

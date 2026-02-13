@@ -2,7 +2,6 @@ package com.royalopulence.dto.booking;
 
 import java.time.LocalDate;
 import java.util.List;
-
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,10 +10,7 @@ import lombok.Data;
 public class BookingResponse {
     private String reservationId;
 
-    // keep for backward compat
-    private String roomId;
-
-    // ✅ new
+    private String roomId; // backward compat
     private List<String> roomIds;
 
     private String roomTypeId;
@@ -27,7 +23,9 @@ public class BookingResponse {
     private double totalAmount;
     private String status;
 
-    // ✅ payment
     private String paymentId;
     private String paymentStatus;
+
+    // ✅ ADD THIS
+    private String clientSecret;
 }
