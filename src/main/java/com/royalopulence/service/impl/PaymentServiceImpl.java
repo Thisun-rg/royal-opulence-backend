@@ -222,9 +222,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment = paymentRepository
                 .findTopByReservationIdOrderByCreatedAtDesc(reservationId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Payment not found for reservation: " + reservationId));
+                .orElseThrow(()
+                        -> new ResourceNotFoundException(
+                        "Payment not found for reservation: " + reservationId));
 
         if (refundAmount <= 0) {
             return map(payment);
@@ -242,9 +242,9 @@ public class PaymentServiceImpl implements PaymentService {
     // ---------------------------------------------------------
     public Payment findByStripeIntentIdOrThrow(String stripeIntentId) {
         return paymentRepository.findByStripeIntentId(stripeIntentId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Payment not found for stripeIntentId: " + stripeIntentId));
+                .orElseThrow(()
+                        -> new ResourceNotFoundException(
+                        "Payment not found for stripeIntentId: " + stripeIntentId));
     }
 
     public Payment save(Payment payment) {
