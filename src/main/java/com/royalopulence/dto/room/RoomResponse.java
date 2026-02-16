@@ -12,3 +12,4 @@ public class RoomResponse {
     private String roomTypeId;
     private String status;
 }
+

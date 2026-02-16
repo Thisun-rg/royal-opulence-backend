@@ -33,16 +33,29 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    // Update profile info
+    // Get specific user by Mongo id (String)
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUser(@PathVariable String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(user);
+    }
+
+    // Update profile info (accepts user object in body)
     @PutMapping("/{id}")
+<<<<<<< HEAD
     public ResponseEntity<User> updateUser(
             @PathVariable String id,
             @RequestBody User updatedUser) {
 
+=======
+    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User updatedUser) {
+>>>>>>> ae1e56b3ddb624b1593dca097864cefa37c50ab3
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setName(updatedUser.getName());
+        // update other fields as needed (avoid changing email/password here unless intentional)
         userRepository.save(user);
 
         return ResponseEntity.ok(user);
@@ -56,3 +69,4 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 }
+

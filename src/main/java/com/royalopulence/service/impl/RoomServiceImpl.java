@@ -38,7 +38,12 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public List<RoomResponse> getAvailableRooms() {
+<<<<<<< HEAD
         return roomRepository.findByStatus("AVAILABLE")
+=======
+        return roomRepository.findByStatusIgnoreCase("AVAILABLE")
+
+>>>>>>> ae1e56b3ddb624b1593dca097864cefa37c50ab3
                 .stream()
                 .map(room -> RoomResponse.builder()
                         .id(room.getId())
