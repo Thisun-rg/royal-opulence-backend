@@ -39,6 +39,8 @@ public class SecurityConfig {
                         // Public endpoints — no token required
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/v1/invoices/**").permitAll()
+
 
                         // Everything else requires authentication
                         .anyRequest().authenticated()

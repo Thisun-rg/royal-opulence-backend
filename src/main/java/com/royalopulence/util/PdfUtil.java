@@ -1,6 +1,8 @@
 package com.royalopulence.util;
 
 import com.royalopulence.dto.report.PaymentSummaryResponse;
+import com.royalopulence.model.core.Reservation;
+import com.royalopulence.model.core.RoomType;
 import com.royalopulence.model.operation.Invoice;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -13,7 +15,9 @@ import java.io.ByteArrayOutputStream;
 @Component
 public class PdfUtil {
 
-    public byte[] generateInvoicePdf(Invoice invoice) {
+    public byte[] generateInvoicePdf(Invoice invoice,
+        Reservation reservation,
+        RoomType roomType) {
         try (PDDocument document = new PDDocument()) {
 
             PDPage page = new PDPage();

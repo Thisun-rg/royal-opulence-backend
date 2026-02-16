@@ -8,6 +8,8 @@ import com.royalopulence.dto.payment.InvoiceRequest;
 import com.royalopulence.dto.payment.InvoiceResponse;
 import com.royalopulence.exception.BusinessException;
 import com.royalopulence.exception.ResourceNotFoundException;
+import com.royalopulence.model.core.Reservation;
+import com.royalopulence.model.core.RoomType;
 import com.royalopulence.model.operation.Invoice;
 import com.royalopulence.model.operation.Payment;
 import com.royalopulence.model.utility.PaymentStatus;
@@ -15,6 +17,9 @@ import com.royalopulence.repository.InvoiceRepository;
 import com.royalopulence.repository.PaymentRepository;
 import com.royalopulence.service.base.InvoiceService;
 import com.royalopulence.util.PdfUtil;
+import com.royalopulence.repository.ReservationRepository;
+import com.royalopulence.repository.RoomTypeRepository;
+
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +30,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final PdfUtil pdfUtil;
+    private final ReservationRepository reservationRepository;   // ✅ ADD
+    private final RoomTypeRepository roomTypeRepository;         // ✅ ADD
 
     @Override
     public InvoiceResponse createInvoice(InvoiceRequest request) {
@@ -85,12 +92,18 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public byte[] downloadInvoicePdf(String invoiceId) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Invoice not found"));
-        return pdfUtil.generateInvoicePdf(invoice);
-    }
+public byte[] downloadInvoicePdf(String invoiceId) {
+    Invoice invoice = invoiceRepository.findById(invoiceId)
+            .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+
+    Reservation reservation = reservationRepository.findById(invoice.getReservationId())
+            .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
+
+    RoomType roomType = roomTypeRepository.findById(reservation.getRoomTypeId())
+            .orElseThrow(() -> new ResourceNotFoundException("RoomType not found"));
+
+    return pdfUtil.generateInvoicePdf(invoice, reservation, roomType);
+}
 
     private InvoiceResponse mapToResponse(Invoice invoice) {
         return new InvoiceResponse(

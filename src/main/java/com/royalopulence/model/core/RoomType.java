@@ -18,4 +18,6 @@ public class RoomType {
     private String name;        // Deluxe Room, Premier Ocean View...
     private double pricePerNight;
     private boolean refundable;
+    private String imageUrl;
+
 }

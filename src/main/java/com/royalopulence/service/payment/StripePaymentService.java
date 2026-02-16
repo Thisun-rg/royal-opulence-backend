@@ -22,15 +22,12 @@ public class StripePaymentService {
         long amountInCents = Math.round(amount * 100);
 
         PaymentIntentCreateParams params =
-                PaymentIntentCreateParams.builder()
-                        .setAmount(amountInCents)
-                        .setCurrency(currency.toLowerCase())
-                        .setAutomaticPaymentMethods(
-                                PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                                        .setEnabled(true)
-                                        .build()
-                        )
-                        .build();
+  PaymentIntentCreateParams.builder()
+    .setAmount(amountInCents)
+    .setCurrency(currency)
+    .addPaymentMethodType("card")
+    .build();
+
 
         return PaymentIntent.create(params);
     }
