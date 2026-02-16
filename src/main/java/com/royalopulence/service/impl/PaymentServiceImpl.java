@@ -29,12 +29,9 @@ public class PaymentServiceImpl implements PaymentService {
     private final InvoiceService invoiceService;
     private final AuditUtil auditUtil;
 
-    private static final double TAX_RATE = 0.10;
-
-    private double total(double base) {
-        return base + (base * TAX_RATE);
-    }
-
+    // ---------------------------------------------------------
+    // Mapping
+    // ---------------------------------------------------------
     private PaymentResponse map(Payment p) {
         return new PaymentResponse(
                 p.getId(),
@@ -46,10 +43,13 @@ public class PaymentServiceImpl implements PaymentService {
                 p.getStatus() == null ? null : p.getStatus().name(),
                 p.getMethod() == null ? null : p.getMethod().name(),
                 p.getCreatedAt(),
-                p.getStripeClientSecret() // can be null for non-stripe
+                p.getStripeClientSecret()
         );
     }
 
+    // ---------------------------------------------------------
+    // NORMAL PAYMENT (Already Final Amount)
+    // ---------------------------------------------------------
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
 
@@ -59,12 +59,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment = new Payment();
         payment.setReservationId(request.getReservationId());
+
+        // IMPORTANT: amount already includes tax from BookingService
         payment.setBaseAmount(request.getAmount());
-        payment.setTaxAmount(request.getAmount() * TAX_RATE);
-        payment.setTotalAmount(total(request.getAmount()));
+        payment.setTaxAmount(0.0);
+        payment.setTotalAmount(request.getAmount());
+
         payment.setCurrency(request.getCurrency());
         payment.setDescription(request.getDescription());
-
         payment.setStatus(PaymentStatus.PENDING);
         payment.setMethod(PaymentMethod.ONLINE);
         payment.setCreatedAt(System.currentTimeMillis());
@@ -75,6 +77,9 @@ public class PaymentServiceImpl implements PaymentService {
         return map(payment);
     }
 
+    // ---------------------------------------------------------
+    // STRIPE PAYMENT (Already Final Amount)
+    // ---------------------------------------------------------
     @Override
     public PaymentResponse createStripePayment(PaymentRequest request) {
 
@@ -83,18 +88,21 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         try {
+
+            // IMPORTANT: amount already includes tax
             PaymentIntent intent = stripePaymentService.createPaymentIntent(
-                    total(request.getAmount()),
+                    request.getAmount(),
                     request.getCurrency()
             );
 
             Payment payment = new Payment();
             payment.setReservationId(request.getReservationId());
-            payment.setBaseAmount(request.getAmount());
-            payment.setTaxAmount(request.getAmount() * TAX_RATE);
-            payment.setTotalAmount(total(request.getAmount()));
-            payment.setCurrency(request.getCurrency());
 
+            payment.setBaseAmount(request.getAmount());
+            payment.setTaxAmount(0.0);
+            payment.setTotalAmount(request.getAmount());
+
+            payment.setCurrency(request.getCurrency());
             payment.setStatus(PaymentStatus.PENDING);
             payment.setMethod(PaymentMethod.STRIPE);
 
@@ -112,32 +120,37 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    // ---------------------------------------------------------
+    // MARK SUCCESS
+    // ---------------------------------------------------------
     @Override
     public PaymentResponse markPaymentSuccess(String id) {
 
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
 
-        if (payment.getStatus() == PaymentStatus.PAID || payment.getStatus() == PaymentStatus.REFUNDED) {
+        if (payment.getStatus() == PaymentStatus.PAID
+                || payment.getStatus() == PaymentStatus.REFUNDED) {
             throw new BusinessException("Invalid payment state change");
         }
 
         payment.setStatus(PaymentStatus.PAID);
         payment = paymentRepository.save(payment);
 
-        // create invoice on success
+        // Auto-create invoice
         InvoiceRequest invoiceRequest = new InvoiceRequest();
         invoiceRequest.setReservationId(payment.getReservationId());
         invoiceRequest.setPaymentId(payment.getId());
-        invoiceRequest.setTotalAmount(payment.getTotalAmount());
-        invoiceRequest.setCurrency(payment.getCurrency());
 
         invoiceService.createInvoice(invoiceRequest);
-        auditUtil.log("PAYMENT_PAID", id);
 
+        auditUtil.log("PAYMENT_PAID", id);
         return map(payment);
     }
 
+    // ---------------------------------------------------------
+    // MARK FAILED
+    // ---------------------------------------------------------
     @Override
     public PaymentResponse markPaymentFailed(String id) {
 
@@ -150,11 +163,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setStatus(PaymentStatus.FAILED);
         payment = paymentRepository.save(payment);
-        auditUtil.log("PAYMENT_FAILED", id);
 
+        auditUtil.log("PAYMENT_FAILED", id);
         return map(payment);
     }
 
+    // ---------------------------------------------------------
+    // REFUND SINGLE PAYMENT
+    // ---------------------------------------------------------
     @Override
     public PaymentResponse markPaymentRefunded(String id) {
 
@@ -167,11 +183,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setStatus(PaymentStatus.REFUNDED);
         payment = paymentRepository.save(payment);
-        auditUtil.log("PAYMENT_REFUNDED", id);
 
+        auditUtil.log("PAYMENT_REFUNDED", id);
         return map(payment);
     }
 
+    // ---------------------------------------------------------
+    // GETTERS
+    // ---------------------------------------------------------
     @Override
     public PaymentResponse getPaymentById(String id) {
         return paymentRepository.findById(id)
@@ -182,29 +201,34 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findAll()
-                .stream().map(this::map).collect(Collectors.toList());
+                .stream()
+                .map(this::map)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<PaymentResponse> getPaymentsByReservationId(String reservationId) {
         return paymentRepository.findByReservationId(reservationId)
-                .stream().map(this::map).collect(Collectors.toList());
+                .stream()
+                .map(this::map)
+                .collect(Collectors.toList());
     }
 
+    // ---------------------------------------------------------
+    // REFUND BY RESERVATION (Used by Booking Cancel)
+    // ---------------------------------------------------------
     @Override
     public PaymentResponse refundByReservation(String reservationId, double refundAmount) {
 
-        Payment payment = paymentRepository.findTopByReservationIdOrderByCreatedAtDesc(reservationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for reservation: " + reservationId));
+        Payment payment = paymentRepository
+                .findTopByReservationIdOrderByCreatedAtDesc(reservationId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Payment not found for reservation: " + reservationId));
 
-        // if 0 refund (policy) => do nothing, return current payment state
         if (refundAmount <= 0) {
             return map(payment);
         }
-
-        // Optional: store extra fields if your Payment model supports them
-        // payment.setRefundAmount(refundAmount);
-        // payment.setRefundedAt(System.currentTimeMillis());
 
         payment.setStatus(PaymentStatus.REFUNDED);
         Payment saved = paymentRepository.save(payment);
@@ -213,10 +237,14 @@ public class PaymentServiceImpl implements PaymentService {
         return map(saved);
     }
 
-    // ✅ webhook helper
+    // ---------------------------------------------------------
+    // WEBHOOK HELPERS
+    // ---------------------------------------------------------
     public Payment findByStripeIntentIdOrThrow(String stripeIntentId) {
         return paymentRepository.findByStripeIntentId(stripeIntentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for stripeIntentId: " + stripeIntentId));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Payment not found for stripeIntentId: " + stripeIntentId));
     }
 
     public Payment save(Payment payment) {

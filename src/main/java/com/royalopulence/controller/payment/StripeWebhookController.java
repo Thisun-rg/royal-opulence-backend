@@ -3,8 +3,8 @@ package com.royalopulence.controller.payment;
 import com.royalopulence.model.core.Reservation;
 import com.royalopulence.model.operation.Payment;
 import com.royalopulence.model.utility.PaymentStatus;
+import com.royalopulence.repository.PaymentRepository;
 import com.royalopulence.repository.ReservationRepository;
-import com.royalopulence.service.impl.PaymentServiceImpl;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class StripeWebhookController {
 
-    private final PaymentServiceImpl paymentServiceImpl;
+    private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
 
     @Value("${stripe.webhookSecret}")
@@ -39,20 +39,25 @@ public class StripeWebhookController {
         }
 
         if ("payment_intent.succeeded".equals(event.getType())) {
+
             PaymentIntent intent = (PaymentIntent) event.getDataObjectDeserializer()
                     .getObject()
                     .orElse(null);
 
             if (intent != null) {
-                // 1) find payment by stripeIntentId
-                Payment payment = paymentServiceImpl.findByStripeIntentIdOrThrow(intent.getId());
 
-                // 2) mark payment SUCCESS
+                // 1️⃣ Find payment by Stripe Intent ID
+                Payment payment = paymentRepository
+                        .findByStripeIntentId(intent.getId())
+                        .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+                // 2️⃣ Mark payment as PAID
                 payment.setStatus(PaymentStatus.PAID);
-                paymentServiceImpl.save(payment);
+                paymentRepository.save(payment);
 
-                // 3) confirm reservation
-                Reservation reservation = reservationRepository.findById(payment.getReservationId())
+                // 3️⃣ Confirm reservation
+                Reservation reservation = reservationRepository
+                        .findById(payment.getReservationId())
                         .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
                 reservation.setStatus(Reservation.ReservationStatus.CONFIRMED);
