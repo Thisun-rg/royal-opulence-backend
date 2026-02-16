@@ -20,7 +20,6 @@ public class RoomSeeder implements CommandLineRunner {
     private final RoomRepository roomRepository;
     private final RoomTypeRepository roomTypeRepository;
 
-    // change if you want more/less
     private static final int ROOMS_PER_TYPE = 50;
 
     @Override
@@ -28,7 +27,7 @@ public class RoomSeeder implements CommandLineRunner {
 
         List<RoomType> types = roomTypeRepository.findAll();
         if (types.isEmpty()) {
-            System.out.println("⚠️ RoomSeeder: No room types found. Skipping seeding rooms.");
+            System.out.println("⚠️ RoomSeeder: No room types found. Skipping.");
             return;
         }
 
@@ -37,9 +36,10 @@ public class RoomSeeder implements CommandLineRunner {
         for (RoomType type : types) {
 
             long existingCount = roomRepository.countByRoomTypeId(type.getId());
+
             if (existingCount >= ROOMS_PER_TYPE) {
-                System.out.println("✅ RoomSeeder: Rooms already exist for " + type.getName()
-                        + " (" + existingCount + "), skipping.");
+                System.out.println("✅ Rooms already exist for " + type.getName()
+                        + " (" + existingCount + ")");
                 continue;
             }
 
@@ -49,25 +49,31 @@ public class RoomSeeder implements CommandLineRunner {
             for (int i = 0; i < needed; i++) {
                 int roomNumber = start + i;
 
-                Room r = new Room();
-                r.setRoomTypeId(type.getId());
-                r.setStatus("AVAILABLE");
+                Room room = new Room();
+                room.setRoomTypeId(type.getId());
+                room.setStatus("AVAILABLE");
 
-                // Optional fields (only set if your Room model has them)
-                try { r.getClass().getMethod("setRoomNumber", String.class).invoke(r, type.getName().substring(0, 1).toUpperCase() + String.format("%03d", roomNumber)); } catch (Exception ignored) {}
-                try { r.getClass().getMethod("setFloor", Integer.class).invoke(r, (roomNumber % 10) + 1); } catch (Exception ignored) {}
+                // If your Room model HAS these fields, set directly (better than reflection)
+                try {
+                    room.setRoomNumber(type.getName().substring(0, 1).toUpperCase()
+                            + String.format("%03d", roomNumber));
+                } catch (Exception ignored) {}
 
-                toInsert.add(r);
+                try {
+                    room.setFloor((roomNumber % 10) + 1);
+                } catch (Exception ignored) {}
+
+                toInsert.add(room);
             }
 
-            System.out.println("🌱 RoomSeeder: Will insert " + needed + " rooms for " + type.getName());
+            System.out.println("🌱 Will insert " + needed + " rooms for " + type.getName());
         }
 
         if (!toInsert.isEmpty()) {
             roomRepository.saveAll(toInsert);
-            System.out.println("✅ RoomSeeder: Inserted total rooms = " + toInsert.size());
+            System.out.println("✅ Inserted total rooms = " + toInsert.size());
         } else {
-            System.out.println("✅ RoomSeeder: Nothing to insert.");
+            System.out.println("✅ Nothing to insert.");
         }
     }
 }

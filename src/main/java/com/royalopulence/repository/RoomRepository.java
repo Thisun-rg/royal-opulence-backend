@@ -1,7 +1,6 @@
 
 package com.royalopulence.repository;
 
-<<<<<<< HEAD
 import com.royalopulence.model.core.Room;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -10,7 +9,7 @@ import java.util.List;
 public interface RoomRepository extends MongoRepository<Room, String> {
     List<Room> findByStatus(String status);
     List<Room> findByRoomTypeId(String roomTypeId);
-=======
+
 import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -27,6 +26,6 @@ public interface RoomRepository extends MongoRepository<Room, String> {
 
     // used by RoomSeeder (you have an error for this)
     long countByRoomTypeId(String roomTypeId);
->>>>>>> ae1e56b3ddb624b1593dca097864cefa37c50ab3
+
 }
 

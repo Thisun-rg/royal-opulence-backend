@@ -20,23 +20,32 @@ public class AdminSetupController {
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/create-admin")
-public String createAdmin() {
-    if (userRepository.findByEmail("admin@royalopulence.com").isPresent()) {
-        return "Admin user already exists.";
+    public String createAdmin() {
+
+        // جلوگیری duplicate admin
+        if (userRepository.findByEmail("admin@royalopulence.com").isPresent()) {
+            return "Admin user already exists.";
+        }
+
+        // Get or create ADMIN role
+        Role adminRole = roleRepository.findByName("ADMIN")
+                .orElseGet(() -> {
+                    Role role = new Role();
+                    role.setName("ADMIN");
+                    return roleRepository.save(role);
+                });
+
+        // Create admin user
+        User admin = new User();
+        admin.setName("Super Admin");
+        admin.setEmail("admin@royalopulence.com");
+        admin.setPassword(passwordEncoder.encode("Admin@123"));
+
+        // If roles stored as Set<String>
+        admin.setRoles(Collections.singleton(adminRole.getName()));
+
+        userRepository.save(admin);
+
+        return "Admin user created successfully!";
     }
-
-    Role adminRole = roleRepository.findByName("ADMIN")
-        .orElseGet(() -> roleRepository.save(new Role(null, "ADMIN")));
-
-    User admin = new User();
-    admin.setName("Super Admin");
-    admin.setEmail("admin@royalopulence.com");
-    admin.setPassword(passwordEncoder.encode("Admin@123"));
-    // store role *name*
-    admin.setRoles(Collections.singleton(adminRole.getName()));
-    userRepository.save(admin);
-
-    return "Admin user created successfully!";
-}
-
 }

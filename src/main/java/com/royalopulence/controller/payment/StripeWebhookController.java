@@ -28,37 +28,50 @@ public class StripeWebhookController {
     @PostMapping("/webhook")
     public ResponseEntity<String> handleStripeWebhook(
             @RequestBody String payload,
-            @RequestHeader("Stripe-Signature") String sigHeader
-    ) throws Exception {
-
+            @RequestHeader(value = "Stripe-Signature", required = false) String sigHeader
+    ) {
         Event event;
+
+        // 1️⃣ Verify Stripe signature
         try {
+            if (sigHeader == null) {
+                return ResponseEntity.badRequest().body("Missing Stripe-Signature header");
+            }
             event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
         } catch (SignatureVerificationException e) {
-            return ResponseEntity.status(400).body("Invalid signature");
+            return ResponseEntity.status(400).body("Invalid Stripe signature");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Webhook error: " + e.getMessage());
         }
 
+        // 2️⃣ Handle payment success
         if ("payment_intent.succeeded".equals(event.getType())) {
-            PaymentIntent intent = (PaymentIntent) event.getDataObjectDeserializer()
+
+            PaymentIntent intent = (PaymentIntent) event
+                    .getDataObjectDeserializer()
                     .getObject()
                     .orElse(null);
 
-            if (intent != null) {
-                // 1) find payment by stripeIntentId
-                Payment payment = paymentServiceImpl.findByStripeIntentIdOrThrow(intent.getId());
-
-                // 2) mark payment SUCCESS
-                payment.setStatus(PaymentStatus.PAID);
-                paymentServiceImpl.save(payment);
-
-                // 3) confirm reservation
-                Reservation reservation = reservationRepository.findById(payment.getReservationId())
-                        .orElseThrow(() -> new RuntimeException("Reservation not found"));
-
-                reservation.setStatus(Reservation.ReservationStatus.CONFIRMED);
-                reservation.setPaymentStatus(PaymentStatus.PAID.name());
-                reservationRepository.save(reservation);
+            if (intent == null) {
+                return ResponseEntity.ok("Ignored (no intent)");
             }
+
+            // Find payment by Stripe Intent ID
+            Payment payment = paymentServiceImpl
+                    .findByStripeIntentIdOrThrow(intent.getId());
+
+            // Mark payment as PAID
+            payment.setStatus(PaymentStatus.PAID);
+            paymentServiceImpl.save(payment);
+
+            // Confirm reservation
+            Reservation reservation = reservationRepository
+                    .findById(payment.getReservationId())
+                    .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+            reservation.setStatus(Reservation.ReservationStatus.CONFIRMED);
+            reservation.setPaymentStatus(PaymentStatus.PAID.name());
+            reservationRepository.save(reservation);
         }
 
         return ResponseEntity.ok("OK");

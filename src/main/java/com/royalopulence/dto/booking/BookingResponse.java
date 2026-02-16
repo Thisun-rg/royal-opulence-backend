@@ -3,43 +3,37 @@ package com.royalopulence.dto.booking;
 import lombok.Builder;
 import lombok.Data;
 
-@Data
-@Builder
-public class BookingResponse {
-
-    private String reservationId;
-    private String roomId;
-    private String roomNumber;
-    private String roomTypeName;
-    private String status;
-    private double totalAmount;
 import java.time.LocalDate;
 import java.util.List;
-import lombok.Builder;
-import lombok.Data;
 
 @Data
 @Builder
 public class BookingResponse {
+
     private String reservationId;
 
-    private String roomId; // backward compat
-    private List<String> roomIds;
-
+    // Room info
+    private String roomId;          // backward compatibility
+    private List<String> roomIds;   // multiple rooms support
+    private String roomNumber;
     private String roomTypeId;
+    private String roomTypeName;
+
+    // Dates
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
 
+    // Booking details
     private int rooms;
     private int guests;
 
     private double totalAmount;
     private String status;
 
+    // Payment
     private String paymentId;
     private String paymentStatus;
 
-    // ✅ ADD THIS
+    // For Stripe / payment gateway
     private String clientSecret;
-
 }
