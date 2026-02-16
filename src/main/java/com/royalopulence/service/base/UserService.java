@@ -4,5 +4,5 @@ import com.royalopulence.dto.auth.*;
 
 public interface UserService {
     AuthResponse register(RegisterRequest request);
-    AuthResponse login(LoginRequest request);ghmnnmm
+    AuthResponse login(LoginRequest request);
 }
