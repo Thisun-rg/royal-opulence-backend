@@ -1,6 +1,6 @@
 package com.royalopulence.service.impl;
 
-<<<<<<< HEAD
+
 import com.royalopulence.dto.booking.BookingRequest;
 import com.royalopulence.dto.booking.BookingResponse;
 import com.royalopulence.model.core.*;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-=======
+
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -36,7 +36,7 @@ import com.royalopulence.service.base.BookingService;
 import com.royalopulence.service.base.PaymentService;
 
 import lombok.RequiredArgsConstructor;
->>>>>>> ae1e56b3ddb624b1593dca097864cefa37c50ab3
+
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +46,7 @@ public class BookingServiceImpl implements BookingService {
     private final RoomTypeRepository roomTypeRepository;
     private final ReservationRepository reservationRepository;
 
-<<<<<<< HEAD
+
     @Override
     public BookingResponse createReservation(String userId, BookingRequest request) {
 
@@ -102,7 +102,7 @@ public class BookingServiceImpl implements BookingService {
                 checkIn.isBefore(r.getCheckOutDate()) &&
                 checkOut.isAfter(r.getCheckInDate())
         );
-=======
+        
     private final PaymentService paymentService;
 
     private static final double TAX_RATE = 0.10;
